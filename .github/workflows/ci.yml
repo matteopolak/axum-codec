@@ -19,6 +19,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
+          components: rustfmt, clippy
       - name: cargo test
         run: cargo test --lib --bins --tests
       - name: cargo fmt
