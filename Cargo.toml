@@ -4,6 +4,7 @@ version = "0.0.1"
 edition = "2021"
 description = "A multi-codec extractor and response writer for Axum"
 license = "MIT OR Apache-2.0"
+authors = ["Matthew Polak <contact@matteopolak.com>"]
 
 [workspace]
 members = ["macros", "."]
