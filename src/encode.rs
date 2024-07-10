@@ -87,11 +87,11 @@ where
 	///
 	/// # Errors
 	///
-	/// See [`rmp_serde::to_vec`].
+	/// See [`rmp_serde::to_vec_named`].
 	#[cfg(feature = "msgpack")]
 	#[inline]
 	pub fn to_msgpack(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
-		rmp_serde::to_vec(&self.0)
+		rmp_serde::to_vec_named(&self.0)
 	}
 
 	/// Attempts to serialize the given value as [YAML](https://yaml.org).
