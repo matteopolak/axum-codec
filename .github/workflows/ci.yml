@@ -6,6 +6,7 @@ on:
       - '**.yml'
       - '.git*'
       - 'Cargo.lock'
+      - 'README.md' # it's included in the crate root
     branches:
       - main
 
