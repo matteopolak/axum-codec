@@ -18,7 +18,7 @@ Here's a quick example that can do the following:
 
 ## Todo
 
-- [x] Support bitcode, bincode, rmp, toml, serde_yaml, and serde_json
+- [x] Support `bitcode`, `bincode`, `rmp`, `toml`, `serde_yaml`, and `serde_json`
 - [x] Add custom `MethodRouter` to automatically encode responses in the correct format
 - [x] Add macro to derive all enabled formats for a struct/enum
 - [ ] Add support for [`aide`](https://github.com/tamasfe/aide)
