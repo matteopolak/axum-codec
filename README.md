@@ -17,9 +17,10 @@ A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
 - [x] Support `bitcode`, `bincode`, `rmp`, `toml`, `serde_yaml`, and `serde_json`
 - [x] Add custom `MethodRouter` to automatically encode responses in the correct format
 - [x] Add macro to derive all enabled formats for a struct/enum
-- [ ] Add support for [`aide`](https://github.com/tamasfe/aide)
+- [x] Add support for [`aide`](https://github.com/tamasfe/aide)
+- [x] Add support for [`validator`](https://github.com/Keats/validator)
 - [ ] Support more formats (issues and PRs welcome)
-- [ ] Add benchmarks
+- [ ] Add benchmarks?
 
 Here's a quick example that can do the following:
 - Decode a `User` from the request body in any of the supported formats.
