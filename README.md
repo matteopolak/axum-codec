@@ -2,6 +2,16 @@
 
 A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
 
+## Features
+
+- Supports encoding and decoding of various formats with a single extractor.
+- Provides a wrapper for [`axum::routing::method_routing`](https://docs.rs/axum/latest/axum/routing/method_routing/index.html) to automatically encode responses in the corect format according to the specified `Accept` header (with a fallback to `Content-Type`, then one of the enabled formats).
+- Provides an attribute macro (under the `macros` feature) to derive all enabled formats for a struct.
+
+Here's a quick example that can do the following:
+- Decode a `User` from the request body in any of the supported formats.
+- Encode a `Greeting` to the response body in any of the supported formats.
+
 ```rust
 use axum_codec::{
   handler::IntoCodec,
@@ -59,7 +69,7 @@ async fn main() {
 }
 ```
 
-# Features
+# Feature flags
 
 - `std`*: Enables various standard library features for dependency crates.
 - `json`*: Enables `JSON` support.
