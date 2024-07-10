@@ -1,12 +1,16 @@
 [package]
 name = "axum-codec"
-version = "0.0.0"
+version = "0.0.1"
 edition = "2021"
 description = "A multi-codec extractor and response writer for Axum"
 license = "MIT OR Apache-2.0"
 
+[workspace]
+members = ["macros", "."]
+
 [dependencies]
 axum = { version = "0.7", default-features = false }
+axum-codec-macros = { version = "0.0.1", optional = true }
 bincode = { version = "2.0.0-rc.3", optional = true, default-features = false }
 bitcode = { version = "0.6", optional = true, default-features = false }
 mime = "0.3"
@@ -15,19 +19,30 @@ serde = { version = "1", optional = true, default-features = false }
 serde_json = { version = "1", optional = true, default-features = false }
 serde_yaml = { version = "0.9", optional = true }
 thiserror = "1"
-toml = { version = "0.8", optional = true, default-features = false }
+toml = { version = "0.8", optional = true }
+
+[dev-dependencies]
+axum = "0.7"
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+axum-codec = { path = ".", features = ["full"] }
+bitcode = "0.6"
+bincode = "2.0.0-rc.3"
 
 [features]
-default = ["json", "std"]
-std = ["bincode?/std", "serde_json?/std", "serde?/std"]
+default = ["json", "std", "macros"]
 
-bincode = ["dep:bincode"]
-bitcode = ["dep:bitcode"]
+full = ["bincode", "bitcode", "json", "msgpack", "toml", "yaml", "std"]
+std = ["bincode?/std", "serde_json?/std", "serde?/std"]
+macros = ["dep:axum-codec-macros"]
+
+bincode = ["dep:bincode", "axum-codec-macros?/bincode"]
+bitcode = ["dep:bitcode", "axum-codec-macros?/bitcode"]
 json = ["dep:serde_json", "serde"]
 msgpack = ["dep:rmp-serde", "serde", "std"]
 toml = ["dep:toml", "serde"]
 yaml = ["dep:serde_yaml", "serde", "std"]
 
 # Should not be manually enabled, but will not cause any issues if it is.
-serde = ["dep:serde"]
+serde = ["dep:serde", "axum-codec-macros?/serde"]
 

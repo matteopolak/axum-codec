@@ -1,0 +1,17 @@
+[package]
+name = "axum-codec-macros"
+version = "0.0.1"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1"
+syn = "2"
+
+[features]
+bincode = []
+bitcode = []
+serde = []
+

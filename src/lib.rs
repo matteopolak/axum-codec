@@ -3,18 +3,39 @@
 #![allow(clippy::module_name_repetitions)]
 #![doc = include_str!("../README.md")]
 
+mod content;
 mod decode;
 mod encode;
+pub mod extract;
+pub mod handler;
+mod macros;
 mod rejection;
+pub mod routing;
 
-pub use {decode::CodecDecode, encode::CodecEncode, rejection::CodecRejection};
+pub use {
+	content::ContentType, decode::CodecDecode, encode::CodecEncode, extract::Accept,
+	handler::CodecHandler, rejection::CodecRejection,
+};
 
 use axum::{
 	body::Bytes,
-	extract::{FromRequest, FromRequestParts, Request},
-	http::{header, request::Parts, HeaderValue},
+	extract::{FromRequest, Request},
+	http::header,
 	response::{IntoResponse, Response},
 };
+
+#[doc(hidden)]
+pub mod __private {
+	#[cfg(feature = "bincode")]
+	pub use bincode;
+	#[cfg(feature = "bitcode")]
+	pub use bitcode;
+	#[cfg(feature = "serde")]
+	pub use serde;
+}
+
+#[cfg(feature = "macros")]
+pub use axum_codec_macros::derive;
 
 /// Codec extractor / response.
 ///
@@ -80,187 +101,13 @@ where
 		let content_type = req
 			.headers()
 			.get(header::CONTENT_TYPE)
-			.and_then(ContentType::from_header)
+			.map_or_else(|| Some(ContentType::default()), ContentType::from_header)
 			.ok_or(CodecRejection::UnsupportedContentType)?;
 
 		let bytes = Bytes::from_request(req, state).await?;
 		let data = Codec::from_bytes(&bytes, content_type)?;
 
 		Ok(data)
-	}
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ContentType {
-	#[cfg(feature = "json")]
-	Json,
-	#[cfg(feature = "msgpack")]
-	MsgPack,
-	#[cfg(feature = "bincode")]
-	Bincode,
-	#[cfg(feature = "bitcode")]
-	Bitcode,
-	#[cfg(feature = "yaml")]
-	Yaml,
-	#[cfg(feature = "toml")]
-	Toml,
-}
-
-impl ContentType {
-	/// Attempts to parse the given [`HeaderValue`] into a [`ContentType`]
-	/// by treating it as a MIME type.
-	///
-	/// Note that, along with official MIME types, this method also recognizes
-	/// some unofficial MIME types that are commonly used in practice.
-	///
-	/// ```edition2021
-	/// # use axum_codec::ContentType;
-	/// # use axum::http::HeaderValue;
-	/// #
-	/// # fn main() {
-	/// let header = HeaderValue::from_static("application/json");
-	/// let content_type = ContentType::from_header(&header).unwrap();
-	///
-	/// assert_eq!(content_type, ContentType::Json);
-	///
-	/// let header = HeaderValue::from_static("application/vnd.msgpack");
-	/// let content_type = ContentType::from_header(&header).unwrap();
-	///
-	/// assert_eq!(content_type, ContentType::MsgPack);
-	///
-	/// let header = HeaderValue::from_static("application/x-msgpack");
-	/// let content_type = ContentType::from_header(&header).unwrap();
-	///
-	/// assert_eq!(content_type, ContentType::MsgPack);
-	/// # }
-	pub fn from_header(header: &HeaderValue) -> Option<Self> {
-		let mime = header.to_str().ok()?.parse::<mime::Mime>().ok()?;
-		let subtype = mime.suffix().map_or_else(|| mime.subtype(), |name| name);
-
-		match (mime.type_().as_str(), subtype.as_str()) {
-			#[cfg(feature = "json")]
-			("application", "json") => Some(Self::Json),
-			#[cfg(feature = "msgpack")]
-			("application", "msgpack" | "vnd.msgpack" | "x-msgpack" | "x.msgpack") => Some(Self::MsgPack),
-			#[cfg(feature = "bincode")]
-			("application", "bincode" | "vnd.bincode" | "x-bincode" | "x.bincode") => Some(Self::Bincode),
-			#[cfg(feature = "bitcode")]
-			("application", "bitcode" | "vnd.bitcode" | "x-bitcode" | "x.bitcode") => Some(Self::Bitcode),
-			#[cfg(feature = "yaml")]
-			("application" | "text", "yaml" | "yml" | "x-yaml") => Some(Self::Yaml),
-			#[cfg(feature = "toml")]
-			("application" | "text", "toml" | "x-toml" | "vnd.toml") => Some(Self::Toml),
-			_ => None,
-		}
-	}
-
-	/// Converts the [`ContentType`] into a [`HeaderValue`].
-	///
-	/// ```edition2021
-	/// # use axum_codec::ContentType;
-	/// # use axum::http::HeaderValue;
-	/// #
-	/// # fn main() {
-	/// let content_type = ContentType::Json;
-	/// let header = content_type.into_header();
-	///
-	/// assert_eq!(header, HeaderValue::from_static("application/json"));
-	///
-	/// let content_type = ContentType::MsgPack;
-	/// let header = content_type.into_header();
-	///
-	/// assert_eq!(header, HeaderValue::from_static("application/vnd.msgpack"));
-	///
-	/// let content_type = ContentType::Yaml;
-	/// let header = content_type.into_header();
-	///
-	/// assert_eq!(header, HeaderValue::from_static("application/x-yaml"));
-	///
-	/// let content_type = ContentType::Toml;
-	/// let header = content_type.into_header();
-	///
-	/// assert_eq!(header, HeaderValue::from_static("text/toml"));
-	/// # }
-	#[must_use]
-	pub fn into_header(self) -> HeaderValue {
-		let text = match self {
-			#[cfg(feature = "json")]
-			Self::Json => "application/json",
-			#[cfg(feature = "msgpack")]
-			Self::MsgPack => "application/vnd.msgpack",
-			#[cfg(feature = "bincode")]
-			Self::Bincode => "application/vnd.bincode",
-			#[cfg(feature = "bitcode")]
-			Self::Bitcode => "application/vnd.bitcode",
-			#[cfg(feature = "yaml")]
-			Self::Yaml => "application/x-yaml",
-			#[cfg(feature = "toml")]
-			Self::Toml => "text/toml",
-		};
-
-		HeaderValue::from_static(text)
-	}
-}
-
-/// Extractor for the request's desired response [`ContentType`].
-///
-/// # Examples
-///
-/// ```edition2021
-/// # use axum_codec::{Accept, Codec};
-/// # use axum::{http::HeaderValue, response::IntoResponse};
-/// # use serde::Serialize;
-/// #
-/// # fn main() {
-/// #[derive(Serialize)]
-/// struct User {
-///   name: String,
-///   age: u8,
-/// }
-///
-/// fn get_user(accept: Accept) -> impl IntoResponse {
-///   Codec(User {
-///     name: "Alice".into(),
-///     age: 42,
-///   })
-///   .to_response(accept)
-/// }
-/// #
-/// # fn main() {}
-#[derive(Debug, Clone, Copy)]
-pub struct Accept(ContentType);
-
-impl Accept {
-	/// Returns the request's desired response [`ContentType`].
-	#[inline]
-	#[must_use]
-	pub fn content_type(self) -> ContentType {
-		self.0
-	}
-}
-
-impl From<Accept> for ContentType {
-	#[inline]
-	fn from(accept: Accept) -> Self {
-		accept.0
-	}
-}
-
-#[axum::async_trait]
-impl<S> FromRequestParts<S> for Accept
-where
-	S: Send + Sync + 'static,
-{
-	type Rejection = CodecRejection;
-
-	async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-		let header = None
-			.or_else(|| parts.headers.get(header::ACCEPT))
-			.or_else(|| parts.headers.get(header::CONTENT_TYPE))
-			.and_then(ContentType::from_header)
-			.ok_or(CodecRejection::UnsupportedContentType)?;
-
-		Ok(Self(header))
 	}
 }
 
