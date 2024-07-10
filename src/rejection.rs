@@ -27,7 +27,7 @@ pub enum CodecRejection {
 	#[cfg(feature = "toml")]
 	#[error(transparent)]
 	Toml(#[from] toml::de::Error),
-	#[cfg(feature = "toml")]
+	#[cfg(any(feature = "toml", feature = "yaml"))]
 	#[error(transparent)]
 	Utf8Error(#[from] core::str::Utf8Error),
 }

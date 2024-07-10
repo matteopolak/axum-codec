@@ -31,7 +31,7 @@ codec_trait!(CodecEncode, bitcode::Encode);
 	not(feature = "bincode"),
 	not(feature = "bitcode")
 ))]
-codec_trait!(CodecDecode);
+codec_trait!(CodecEncode);
 
 /// Errors that can occur during encoding.
 ///
@@ -67,6 +67,7 @@ impl IntoResponse for Error {
 	}
 }
 
+#[cfg(feature = "serde")]
 impl<T> Codec<T>
 where
 	T: serde::Serialize,

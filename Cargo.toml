@@ -11,13 +11,13 @@ members = ["macros", "."]
 
 [dependencies]
 axum = { version = "0.7", default-features = false }
-axum-codec-macros = { version = "0.0.1", optional = true }
-bincode = { version = "2.0.0-rc.3", optional = true, default-features = false }
-bitcode = { version = "0.6", optional = true, default-features = false }
+axum-codec-macros = { version = "0.0.2", optional = true }
+bincode = { version = "2.0.0-rc.3", optional = true }
+bitcode = { version = "0.6", optional = true }
 mime = "0.3"
 rmp-serde = { version= "1", optional = true }
 serde = { version = "1", optional = true, default-features = false }
-serde_json = { version = "1", optional = true, default-features = false }
+serde_json = { version = "1", optional = true }
 serde_yaml = { version = "0.9", optional = true }
 thiserror = "1"
 toml = { version = "0.8", optional = true }
@@ -31,18 +31,17 @@ bitcode = "0.6"
 bincode = "2.0.0-rc.3"
 
 [features]
-default = ["json", "std", "macros"]
+default = ["json", "macros"]
 
-full = ["bincode", "bitcode", "json", "msgpack", "toml", "yaml", "std"]
-std = ["bincode?/std", "serde_json?/std", "serde?/std"]
+full = ["bincode", "bitcode", "json", "msgpack", "toml", "yaml"]
 macros = ["dep:axum-codec-macros"]
 
 bincode = ["dep:bincode", "axum-codec-macros?/bincode"]
 bitcode = ["dep:bitcode", "axum-codec-macros?/bitcode"]
 json = ["dep:serde_json", "serde"]
-msgpack = ["dep:rmp-serde", "serde", "std"]
+msgpack = ["dep:rmp-serde", "serde"]
 toml = ["dep:toml", "serde"]
-yaml = ["dep:serde_yaml", "serde", "std"]
+yaml = ["dep:serde_yaml", "serde"]
 
 # Should not be manually enabled, but will not cause any issues if it is.
 serde = ["dep:serde", "axum-codec-macros?/serde"]
