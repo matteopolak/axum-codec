@@ -1,7 +1,7 @@
 # Axum Codec
 
 [![https://img.shields.io/crates/v/axum-codec](https://img.shields.io/crates/v/axum-codec)](https://crates.io/crates/axum-codec)
-[![https://img.shields.io/docsrs/axum-codec](https://img.shields.io/docsrs/axum-codec)](https://docs.rs/axum-codec/latest/axum-codec/)
+[![https://img.shields.io/docsrs/axum-codec](https://img.shields.io/docsrs/axum-codec)](https://docs.rs/axum-codec/latest/axum_codec/)
 [![ci status](https://github.com/matteopolak/axum-codec/workflows/ci/badge.svg)](https://github.com/matteopolak/axum-codec/actions)
 
 A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
