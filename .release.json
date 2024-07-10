@@ -1,0 +1,68 @@
+{
+	"categories": [
+		{
+			"title": "## 🚀 Features",
+			"labels": [
+				"feat"
+			]
+		},
+		{
+			"title": "## 🐛 Fixes",
+			"labels": [
+				"fix"
+			]
+		},
+		{
+			"title": "## 📄 Documentation",
+			"labels": [
+				"docs"
+			]
+		},
+		{
+			"title": "## 🧹 Chores",
+			"labels": [
+				"remove",
+				"fmt",
+				"chore"
+			]
+		},
+		{
+			"title": "## 🧪 Tests",
+			"labels": [
+				"test",
+				"ci"
+			]
+		}
+	],
+	"ignore_labels": [
+		"ignore"
+	],
+	"sort": {
+		"order": "ASC",
+		"on_property": "mergedAt"
+	},
+	"template": "${{CHANGELOG}}",
+	"pr_template": "- [**${{TITLE}}**](https://github.com/matteopolak/axum-codec/commit/${{MERGE_SHA}}) by ${{AUTHOR}}",
+	"empty_template": "- no changes",
+	"max_tags_to_fetch": 200,
+	"max_pull_requests": 200,
+	"max_back_track_time_days": 365,
+	"exclude_merge_branches": [],
+	"tag_resolver": {
+		"method": "semver",
+		"filter": {
+			"pattern": "v(.+)",
+			"flags": "gu"
+		}
+	},
+	"label_extractor": [
+		{
+			"pattern": "^(.+): (.+)",
+			"target": "$1",
+			"on_property": "title"
+		}
+	],
+	"base_branches": [
+		"dev"
+	]
+}
