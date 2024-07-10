@@ -1,5 +1,6 @@
 use axum::{extract::State, Router};
 use axum_codec::{
+	handler::IntoCodecResponse,
 	routing::{get, post},
 	Codec,
 };
@@ -10,7 +11,7 @@ struct User {
 	age: u8,
 }
 
-async fn me() -> User {
+async fn me() -> impl IntoCodecResponse {
 	User {
 		name: "Alice".into(),
 		age: 42,

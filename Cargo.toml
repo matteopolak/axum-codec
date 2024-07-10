@@ -8,7 +8,7 @@ authors = ["Matthew Polak <contact@matteopolak.com>"]
 repository = "https://github.com/matteopolak/axum-codec"
 
 [workspace]
-members = ["macros", "."]
+members = ["macros", ".", "examples/aide-validator", "examples/basic"]
 
 [dependencies]
 aide = { version = "0.13", optional = true, default-features = false, features = ["axum"] }
@@ -31,11 +31,8 @@ validator = { version = "0.18", optional = true }
 axum = "0.7"
 serde = { version = "1", features = ["derive", "rc"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-axum-codec = { path = ".", features = ["full-codecs", "macros", "aide", "validator"] }
+axum-codec = { path = ".", features = ["full-codecs", "macros"] }
 bitcode = "0.6"
-bincode = "2.0.0-rc.3"
-schemars = { version = "0.8", features = ["derive"] }
-validator = "0.18"
 
 [features]
 default = ["json", "macros"]

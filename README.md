@@ -75,7 +75,8 @@ struct Greeting {
   message: String,
 }
 
-async fn greet(Codec(user): Codec<User>) -> Greeting {
+/// Specify `impl IntoCodecResponse`, similar to `axum`
+async fn greet(Codec(user): Codec<User>) -> impl IntoCodecResponse {
   Greeting {
     message: format!("Hello, {}! You are {} years old.", user.name, user.age),
   }
