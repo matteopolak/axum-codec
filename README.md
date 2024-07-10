@@ -54,7 +54,7 @@ struct User {
   age: u8,
 }
 
-async fn me() -> impl IntoCodecResponse {
+async fn me() -> User {
   User {
     name: "Alice".into(),
     age: 42,
@@ -67,7 +67,7 @@ async fn manual_me(accept: Accept, Codec(user): Codec<User>) -> impl IntoRespons
     name: "Alice".into(),
     age: 42,
   })
-  .into_codec_response(accept)
+  .into_codec_response(accept.content_type())
 }
 
 #[axum_codec::apply(encode)]

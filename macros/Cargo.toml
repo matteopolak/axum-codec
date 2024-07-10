@@ -1,10 +1,11 @@
 [package]
 name = "axum-codec-macros"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 description = "Procedural macros for axum-codec"
 license = "MIT OR Apache-2.0"
 authors = ["Matthew Polak <contact@matteopolak.com>"]
+repository = "https://github.com/matteopolak/axum-codec"
 
 [lib]
 proc-macro = true

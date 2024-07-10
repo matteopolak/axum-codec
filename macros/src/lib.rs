@@ -105,27 +105,18 @@ pub fn apply(attr: TokenStream, input: TokenStream) -> TokenStream {
 	}
 
 	#[cfg(feature = "aide")]
-	{
-		if args.encode {
-			tokens.extend(TokenStream::from(quote! {
-				#[derive(axum_codec::__private::schemars::JsonSchema)]
-			}));
-		}
-
-		tokens.extend(TokenStream::from(quote! {
-			#[schemars(crate = "axum_codec::__private::schemars")]
-		}));
-	}
+	tokens.extend(TokenStream::from(quote! {
+		#[derive(axum_codec::__private::schemars::JsonSchema)]
+		#[schemars(crate = "axum_codec::__private::schemars")]
+	}));
 
 	// TODO: Implement #[validate(crate = "...")]
 	// For now, use the real crate name so the error is nicer.
 	#[cfg(feature = "validator")]
-	{
-		if args.encode {
-			tokens.extend(TokenStream::from(quote! {
-				#[derive(validator::Validate)]
-			}));
-		}
+	if args.decode {
+		tokens.extend(TokenStream::from(quote! {
+			#[derive(validator::Validate)]
+		}));
 	}
 
 	tokens.extend(input);

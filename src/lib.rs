@@ -186,6 +186,7 @@ pub(crate) use codec_trait;
 #[cfg(test)]
 mod test {
 	use super::{Codec, ContentType};
+	use crate as axum_codec;
 
 	#[super::apply(decode)]
 	#[derive(Debug, PartialEq, Eq)]
