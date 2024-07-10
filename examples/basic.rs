@@ -1,4 +1,4 @@
-use axum::Router;
+use axum::{extract::State, Router};
 use axum_codec::{
 	handler::IntoCodec,
 	routing::{get, post},
@@ -29,11 +29,17 @@ async fn greet(Codec(user): Codec<User>) -> Greeting {
 	}
 }
 
+async fn state(State(state): State<String>) -> Greeting {
+	Greeting { message: state }
+}
+
 #[tokio::main]
 async fn main() {
 	let app = Router::new()
 		.route("/me", get(me).into())
-		.route("/greet", post(greet).into());
+		.route("/greet", post(greet).into())
+		.route("/state", get(state).into())
+		.with_state("Hello, world!".to_string());
 
 	let listener = tokio::net::TcpListener::bind(("127.0.0.1", 3000))
 		.await

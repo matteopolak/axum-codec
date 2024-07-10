@@ -59,17 +59,22 @@ pub use axum_codec_macros::derive;
 /// # Examples
 ///
 /// ```edition2021
-/// # use axum_codec::Codec;
+/// # use axum_codec::{Codec, ContentType};
 /// # use axum::http::HeaderValue;
 /// # use serde_json::json;
 /// #
 /// # fn main() {
+/// #[axum_codec::derive(decode)]
+/// struct Greeting {
+///   hello: String
+/// }
+///
 /// let bytes = b"{\"hello\": \"world\"}";
-/// let content_type = HeaderValue::from_static("application/json");
+/// let content_type = ContentType::Json;
 ///
-/// let Codec(data) = Codec::from_bytes(bytes, content_type).unwrap();
+/// let Codec(data) = Codec::<Greeting>::from_bytes(bytes, content_type).unwrap();
 ///
-/// assert_eq!(data, json!({ "hello": "world" }));
+/// assert_eq!(data.hello, "world");
 /// # }
 /// ```
 pub struct Codec<T>(pub T);
@@ -101,8 +106,8 @@ where
 		let content_type = req
 			.headers()
 			.get(header::CONTENT_TYPE)
-			.map_or_else(|| Some(ContentType::default()), ContentType::from_header)
-			.ok_or(CodecRejection::UnsupportedContentType)?;
+			.and_then(ContentType::from_header)
+			.unwrap_or_default();
 
 		let bytes = Bytes::from_request(req, state).await?;
 		let data = Codec::from_bytes(&bytes, content_type)?;
@@ -124,3 +129,42 @@ macro_rules! codec_trait {
 }
 
 pub(crate) use codec_trait;
+
+#[cfg(test)]
+mod test {
+	use super::{Codec, ContentType};
+
+	#[super::derive(decode)]
+	#[derive(Debug, PartialEq, Eq)]
+	struct Data {
+		hello: String,
+	}
+
+	#[test]
+	fn test_json_codec() {
+		let bytes = b"{\"hello\": \"world\"}";
+
+		let Codec(data) = Codec::<Data>::from_bytes(bytes, ContentType::Json).unwrap();
+
+		assert_eq!(
+			data,
+			Data {
+				hello: "world".into()
+			}
+		);
+	}
+
+	#[test]
+	fn test_msgpack_codec() {
+		let bytes = b"\x81\xa5hello\xa5world";
+
+		let Codec(data) = Codec::<Data>::from_bytes(bytes, ContentType::MsgPack).unwrap();
+
+		assert_eq!(
+			data,
+			Data {
+				hello: "world".into()
+			}
+		);
+	}
+}

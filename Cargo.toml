@@ -11,7 +11,7 @@ members = ["macros", "."]
 
 [dependencies]
 axum = { version = "0.7", default-features = false }
-axum-codec-macros = { version = "0.0.1", optional = true }
+axum-codec-macros = { path = "macros", optional = true }
 bincode = { version = "2.0.0-rc.3", optional = true, default-features = false }
 bitcode = { version = "0.6", optional = true, default-features = false }
 mime = "0.3"

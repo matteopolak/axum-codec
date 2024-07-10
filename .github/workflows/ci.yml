@@ -1,0 +1,27 @@
+on:
+  push:
+    paths:
+      - '**.rs'
+      - '**.toml'
+      - '**.yml'
+      - '.git*'
+      - 'Cargo.lock'
+    branches:
+      - main
+
+name: ci
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: cargo test
+        run: cargo test --lib --bins --tests
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+      - name: cargo clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings

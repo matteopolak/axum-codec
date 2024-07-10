@@ -14,8 +14,7 @@ use crate::{CodecRejection, ContentType};
 /// # use axum::{http::HeaderValue, response::IntoResponse};
 /// # use serde::Serialize;
 /// #
-/// # fn main() {
-/// #[derive(Serialize)]
+/// #[axum_codec::derive(encode)]
 /// struct User {
 ///   name: String,
 ///   age: u8,
@@ -30,6 +29,7 @@ use crate::{CodecRejection, ContentType};
 /// }
 /// #
 /// # fn main() {}
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Accept(ContentType);
 
@@ -61,7 +61,7 @@ where
 			.or_else(|| parts.headers.get(header::ACCEPT))
 			.or_else(|| parts.headers.get(header::CONTENT_TYPE))
 			.and_then(ContentType::from_header)
-			.ok_or(CodecRejection::UnsupportedContentType)?;
+			.unwrap_or_default();
 
 		Ok(Self(header))
 	}
