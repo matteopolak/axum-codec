@@ -6,9 +6,28 @@ description = "A multi-codec extractor and response writer for Axum"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-axum = { version = "0.7", features = ["macros"] }
-bincode = "1.3.3"
-bitcode = "0.6.0"
-rmp-serde = "1"
-serde = "1.0.204"
-serde_json = "1"
+axum = { version = "0.7", default-features = false }
+bincode = { version = "2.0.0-rc.3", optional = true, default-features = false }
+bitcode = { version = "0.6", optional = true, default-features = false }
+mime = "0.3"
+rmp-serde = { version= "1", optional = true }
+serde = { version = "1", optional = true, default-features = false }
+serde_json = { version = "1", optional = true, default-features = false }
+serde_yaml = { version = "0.9", optional = true }
+thiserror = "1"
+toml = { version = "0.8", optional = true, default-features = false }
+
+[features]
+default = ["json", "std"]
+std = ["bincode?/std", "serde_json?/std", "serde?/std"]
+
+bincode = ["dep:bincode"]
+bitcode = ["dep:bitcode"]
+json = ["dep:serde_json", "serde"]
+msgpack = ["dep:rmp-serde", "serde", "std"]
+toml = ["dep:toml", "serde"]
+yaml = ["dep:serde_yaml", "serde", "std"]
+
+# Should not be manually enabled, but will not cause any issues if it is.
+serde = ["dep:serde"]
+
