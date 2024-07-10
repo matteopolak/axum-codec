@@ -31,7 +31,7 @@ pub enum CodecRejection {
 	#[error(transparent)]
 	Utf8Error(#[from] core::str::Utf8Error),
 	#[cfg(feature = "validator")]
-	#[error("validatior error")]
+	#[error("validator error")]
 	Validator(#[from] validator::ValidationErrors),
 }
 
