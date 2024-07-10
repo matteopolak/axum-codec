@@ -30,12 +30,16 @@ pub mod __private {
 	pub use bincode;
 	#[cfg(feature = "bitcode")]
 	pub use bitcode;
+	#[cfg(feature = "aide")]
+	pub use schemars;
 	#[cfg(feature = "serde")]
 	pub use serde;
+	#[cfg(feature = "validator")]
+	pub use validator;
 }
 
 #[cfg(feature = "macros")]
-pub use axum_codec_macros::derive;
+pub use axum_codec_macros::apply;
 
 /// Codec extractor / response.
 ///
@@ -64,7 +68,7 @@ pub use axum_codec_macros::derive;
 /// # use serde_json::json;
 /// #
 /// # fn main() {
-/// #[axum_codec::derive(decode)]
+/// #[axum_codec::apply(decode)]
 /// struct Greeting {
 ///   hello: String
 /// }
@@ -78,6 +82,55 @@ pub use axum_codec_macros::derive;
 /// # }
 /// ```
 pub struct Codec<T>(pub T);
+
+#[cfg(feature = "aide")]
+impl<T> aide::operation::OperationInput for Codec<T>
+where
+	T: schemars::JsonSchema,
+{
+	fn operation_input(ctx: &mut aide::gen::GenContext, operation: &mut aide::openapi::Operation) {
+		axum::Json::<T>::operation_input(ctx, operation);
+	}
+
+	fn inferred_early_responses(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Vec<(Option<u16>, aide::openapi::Response)> {
+		axum::Json::<T>::inferred_early_responses(ctx, operation)
+	}
+}
+
+#[cfg(feature = "aide")]
+impl<T> aide::operation::OperationOutput for Codec<T>
+where
+	T: schemars::JsonSchema,
+{
+	type Inner = <axum::Json<T> as aide::operation::OperationOutput>::Inner;
+
+	fn operation_response(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Option<aide::openapi::Response> {
+		axum::Json::<T>::operation_response(ctx, operation)
+	}
+
+	fn inferred_responses(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Vec<(Option<u16>, aide::openapi::Response)> {
+		axum::Json::<T>::inferred_responses(ctx, operation)
+	}
+}
+
+#[cfg(feature = "validator")]
+impl<T> validator::Validate for Codec<T>
+where
+	T: validator::Validate,
+{
+	fn validate(&self) -> Result<(), validator::ValidationErrors> {
+		self.0.validate()
+	}
+}
 
 impl<T> Codec<T>
 where
@@ -134,7 +187,7 @@ pub(crate) use codec_trait;
 mod test {
 	use super::{Codec, ContentType};
 
-	#[super::derive(decode)]
+	#[super::apply(decode)]
 	#[derive(Debug, PartialEq, Eq)]
 	struct Data {
 		hello: String,

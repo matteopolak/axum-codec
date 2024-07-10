@@ -44,7 +44,7 @@ impl Parse for Args {
 /// A utility macro for automatically deriving the correct traits
 /// depending on the enabled features.
 #[proc_macro_attribute]
-pub fn derive(attr: TokenStream, input: TokenStream) -> TokenStream {
+pub fn apply(attr: TokenStream, input: TokenStream) -> TokenStream {
 	let args = syn::parse_macro_input!(attr as Args);
 
 	let mut tokens = TokenStream::default();
@@ -88,17 +88,42 @@ pub fn derive(attr: TokenStream, input: TokenStream) -> TokenStream {
 	}
 
 	// TODO: Implement #[bitcode(crate = "...")]
+	// For now, use the real crate name so the error is nicer.
 	#[cfg(feature = "bitcode")]
 	{
 		if args.encode {
 			tokens.extend(TokenStream::from(quote! {
-				#[derive(axum_codec::__private::bitcode::Encode)]
+				#[derive(bitcode::Encode)]
 			}));
 		}
 
 		if args.decode {
 			tokens.extend(TokenStream::from(quote! {
-				#[derive(axum_codec::__private::bitcode::Decode)]
+				#[derive(bitcode::Decode)]
+			}));
+		}
+	}
+
+	#[cfg(feature = "aide")]
+	{
+		if args.encode {
+			tokens.extend(TokenStream::from(quote! {
+				#[derive(axum_codec::__private::schemars::JsonSchema)]
+			}));
+		}
+
+		tokens.extend(TokenStream::from(quote! {
+			#[schemars(crate = "axum_codec::__private::schemars")]
+		}));
+	}
+
+	// TODO: Implement #[validate(crate = "...")]
+	// For now, use the real crate name so the error is nicer.
+	#[cfg(feature = "validator")]
+	{
+		if args.encode {
+			tokens.extend(TokenStream::from(quote! {
+				#[derive(validator::Validate)]
 			}));
 		}
 	}

@@ -17,4 +17,6 @@ syn = "2"
 bincode = []
 bitcode = []
 serde = []
+aide = []
+validator = []
 

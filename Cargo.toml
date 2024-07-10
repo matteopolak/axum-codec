@@ -10,31 +10,43 @@ authors = ["Matthew Polak <contact@matteopolak.com>"]
 members = ["macros", "."]
 
 [dependencies]
+aide = { version = "0.13", optional = true, default-features = false, features = ["axum"] }
 axum = { version = "0.7", default-features = false }
-axum-codec-macros = { version = "0.0.2", optional = true }
-bincode = { version = "2.0.0-rc.3", optional = true }
-bitcode = { version = "0.6", optional = true }
+axum-codec-macros = { path = "macros", version = "0.0.2", optional = true }
+bincode = { version = "2.0.0-rc.3", default-features = false, features = ["std"], optional = true }
+bitcode = { version = "0.6", default-features = false, optional = true }
 mime = "0.3"
+paste = "1"
 rmp-serde = { version= "1", optional = true }
+schemars = { version = "0.8", optional = true, default-features = false }
 serde = { version = "1", optional = true, default-features = false }
 serde_json = { version = "1", optional = true }
 serde_yaml = { version = "0.9", optional = true }
 thiserror = "1"
 toml = { version = "0.8", optional = true }
+validator = { version = "0.18", optional = true }
 
 [dev-dependencies]
 axum = "0.7"
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", features = ["derive", "rc"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-axum-codec = { path = ".", features = ["full"] }
+axum-codec = { path = ".", features = ["full-codecs", "macros", "aide", "validator"] }
 bitcode = "0.6"
 bincode = "2.0.0-rc.3"
 
 [features]
 default = ["json", "macros"]
 
-full = ["bincode", "bitcode", "json", "msgpack", "toml", "yaml"]
-macros = ["dep:axum-codec-macros"]
+# Enables all codecs
+full-codecs = ["bincode", "bitcode", "json", "msgpack", "toml", "yaml"]
+macros = ["dep:axum-codec-macros", "schemars?/derive", "bincode?/derive", "bitcode?/derive", "serde?/derive", "validator?/derive"]
+
+# Enables support for {get,put,..}_with and relevant chaning methods
+# to add documentation to routes
+aide = ["dep:aide", "dep:schemars", "axum-codec-macros?/aide", "axum/json", "axum/form", "axum/original-uri", "axum/query", "axum/tokio", "axum/matched-path"]
+
+# Enables support for `validator`, adds an additional `validator::Validate` bound to `T` in `Codec<T>`
+validator = ["dep:validator", "axum-codec-macros?/validator"]
 
 bincode = ["dep:bincode", "axum-codec-macros?/bincode"]
 bitcode = ["dep:bitcode", "axum-codec-macros?/bitcode"]

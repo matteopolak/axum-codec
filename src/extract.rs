@@ -14,7 +14,7 @@ use crate::{CodecRejection, ContentType};
 /// # use axum::{http::HeaderValue, response::IntoResponse};
 /// # use serde::Serialize;
 /// #
-/// #[axum_codec::derive(encode)]
+/// #[axum_codec::apply(encode)]
 /// struct User {
 ///   name: String,
 ///   age: u8,

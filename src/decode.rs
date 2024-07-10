@@ -1,38 +1,93 @@
 use crate::{codec_trait, Codec, CodecRejection, ContentType};
 
-#[cfg(all(feature = "serde", feature = "bincode", feature = "bitcode"))]
-codec_trait!(
-	CodecDecode,
-	serde::de::DeserializeOwned + bincode::Decode + bitcode::DecodeOwned
-);
+#[cfg(not(feature = "validator"))]
+mod codec {
+	use super::codec_trait;
 
-#[cfg(all(feature = "serde", feature = "bincode", not(feature = "bitcode")))]
-codec_trait!(CodecDecode, serde::de::DeserializeOwned + bincode::Decode);
+	#[cfg(all(feature = "serde", feature = "bincode", feature = "bitcode"))]
+	codec_trait!(
+		CodecDecode,
+		serde::de::DeserializeOwned + bincode::Decode + bitcode::DecodeOwned
+	);
 
-#[cfg(all(feature = "serde", not(feature = "bincode"), feature = "bitcode"))]
-codec_trait!(
-	CodecDecode,
-	serde::de::DeserializeOwned + bitcode::DecodeOwned
-);
+	#[cfg(all(feature = "serde", feature = "bincode", not(feature = "bitcode")))]
+	codec_trait!(CodecDecode, serde::de::DeserializeOwned + bincode::Decode);
 
-#[cfg(all(feature = "serde", not(feature = "bincode"), not(feature = "bitcode")))]
-codec_trait!(CodecDecode, serde::de::DeserializeOwned);
+	#[cfg(all(feature = "serde", not(feature = "bincode"), feature = "bitcode"))]
+	codec_trait!(
+		CodecDecode,
+		serde::de::DeserializeOwned + bitcode::DecodeOwned
+	);
 
-#[cfg(all(not(feature = "serde"), feature = "bincode", feature = "bitcode"))]
-codec_trait!(CodecDecode, bincode::Decode + bitcode::DecodeOwned);
+	#[cfg(all(feature = "serde", not(feature = "bincode"), not(feature = "bitcode")))]
+	codec_trait!(CodecDecode, serde::de::DeserializeOwned);
 
-#[cfg(all(not(feature = "serde"), feature = "bincode", not(feature = "bitcode")))]
-codec_trait!(CodecDecode, bincode::Decode);
+	#[cfg(all(not(feature = "serde"), feature = "bincode", feature = "bitcode"))]
+	codec_trait!(CodecDecode, bincode::Decode + bitcode::DecodeOwned);
 
-#[cfg(all(not(feature = "serde"), not(feature = "bincode"), feature = "bitcode"))]
-codec_trait!(CodecDecode, bitcode::DecodeOwned);
+	#[cfg(all(not(feature = "serde"), feature = "bincode", not(feature = "bitcode")))]
+	codec_trait!(CodecDecode, bincode::Decode);
 
-#[cfg(all(
-	not(feature = "serde"),
-	not(feature = "bincode"),
-	not(feature = "bitcode")
-))]
-codec_trait!(CodecDecode);
+	#[cfg(all(not(feature = "serde"), not(feature = "bincode"), feature = "bitcode"))]
+	codec_trait!(CodecDecode, bitcode::DecodeOwned);
+
+	#[cfg(all(
+		not(feature = "serde"),
+		not(feature = "bincode"),
+		not(feature = "bitcode")
+	))]
+	codec_trait!(CodecDecode);
+}
+
+#[cfg(feature = "validator")]
+mod codec {
+	use super::codec_trait;
+
+	#[cfg(all(feature = "serde", feature = "bincode", feature = "bitcode"))]
+	codec_trait!(
+		CodecDecode,
+		serde::de::DeserializeOwned + bincode::Decode + bitcode::DecodeOwned + validator::Validate
+	);
+
+	#[cfg(all(feature = "serde", feature = "bincode", not(feature = "bitcode")))]
+	codec_trait!(
+		CodecDecode,
+		serde::de::DeserializeOwned + bincode::Decode + validator::Validate
+	);
+
+	#[cfg(all(feature = "serde", not(feature = "bincode"), feature = "bitcode"))]
+	codec_trait!(
+		CodecDecode,
+		serde::de::DeserializeOwned + bitcode::DecodeOwned + validator::Validate
+	);
+
+	#[cfg(all(feature = "serde", not(feature = "bincode"), not(feature = "bitcode")))]
+	codec_trait!(
+		CodecDecode,
+		serde::de::DeserializeOwned + validator::Validate
+	);
+
+	#[cfg(all(not(feature = "serde"), feature = "bincode", feature = "bitcode"))]
+	codec_trait!(
+		CodecDecode,
+		bincode::Decode + bitcode::DecodeOwned + validator::Validate
+	);
+
+	#[cfg(all(not(feature = "serde"), feature = "bincode", not(feature = "bitcode")))]
+	codec_trait!(CodecDecode, bincode::Decode + validator::Validate);
+
+	#[cfg(all(not(feature = "serde"), not(feature = "bincode"), feature = "bitcode"))]
+	codec_trait!(CodecDecode, bitcode::DecodeOwned + validator::Validate);
+
+	#[cfg(all(
+		not(feature = "serde"),
+		not(feature = "bincode"),
+		not(feature = "bitcode")
+	))]
+	codec_trait!(CodecDecode);
+}
+
+pub use codec::CodecDecode;
 
 #[cfg(feature = "serde")]
 impl<T> Codec<T>
@@ -51,6 +106,8 @@ where
 	}
 
 	/// Attempts to deserialize the given bytes as [MessagePack](https://msgpack.org).
+	/// Does not perform any validation if the `validator` feature is enabled. For validation,
+	/// use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -62,6 +119,8 @@ where
 	}
 
 	/// Attempts to deserialize the given text as [YAML](https://yaml.org).
+	/// Does not perform any validation if the `validator` feature is enabled. For validation,
+	/// use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -73,6 +132,8 @@ where
 	}
 
 	/// Attempts to deserialize the given text as [TOML](https://toml.io).
+	/// Does not perform any validation if the `validator` feature is enabled. For validation,
+	/// use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -86,6 +147,8 @@ where
 
 impl<T> Codec<T> {
 	/// Attempts to deserialize the given bytes as [Bincode](https://github.com/bincode-org/bincode).
+	/// Does not perform any validation if the `validator` feature is enabled. For validation,
+	/// use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -100,6 +163,8 @@ impl<T> Codec<T> {
 	}
 
 	/// Attempts to deserialize the given bytes as [Bitcode](https://github.com/SoftbearStudios/bitcode).
+	/// Does not perform any validation if the `validator` feature is enabled. For validation,
+	/// use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -122,7 +187,7 @@ impl<T> Codec<T> {
 	where
 		T: CodecDecode,
 	{
-		Ok(match content_type {
+		let codec = match content_type {
 			#[cfg(feature = "json")]
 			ContentType::Json => Self::from_json(bytes)?,
 			#[cfg(feature = "msgpack")]
@@ -135,6 +200,11 @@ impl<T> Codec<T> {
 			ContentType::Yaml => Self::from_yaml(core::str::from_utf8(bytes)?)?,
 			#[cfg(feature = "toml")]
 			ContentType::Toml => Self::from_toml(core::str::from_utf8(bytes)?)?,
-		})
+		};
+
+		#[cfg(feature = "validator")]
+		validator::Validate::validate(&codec)?;
+
+		Ok(codec)
 	}
 }

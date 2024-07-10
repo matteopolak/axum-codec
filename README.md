@@ -12,10 +12,6 @@ A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
 - Provides a wrapper for [`axum::routing::method_routing`](https://docs.rs/axum/latest/axum/routing/method_routing/index.html) to automatically encode responses in the correct format according to the specified `Accept` header (with a fallback to `Content-Type`, then one of the enabled formats).
 - Provides an attribute macro (under the `macros` feature) to add derives for all enabled formats to a struct/enum.
 
-Here's a quick example that can do the following:
-- Decode a `User` from the request body in any of the supported formats.
-- Encode a `Greeting` to the response body in any of the supported formats.
-
 ## Todo
 
 - [x] Support `bitcode`, `bincode`, `rmp`, `toml`, `serde_yaml`, and `serde_json`
@@ -25,10 +21,14 @@ Here's a quick example that can do the following:
 - [ ] Support more formats (issues and PRs welcome)
 - [ ] Add benchmarks
 
+Here's a quick example that can do the following:
+- Decode a `User` from the request body in any of the supported formats.
+- Encode a `Greeting` to the response body in any of the supported formats.
+
 ```rust
 use axum::{Router, response::IntoResponse};
 use axum_codec::{
-  handler::IntoCodec,
+  handler::IntoCodecResponse,
   routing::{get, post},
   Codec,
   extract::Accept,
@@ -46,13 +46,14 @@ use axum_codec::{
 //
 // NOTE: `bitcode` does not support `#[bitcode(crate = "...)]` yet,
 // so the dependency must be specified in your `Cargo.toml` if enabled (and using this macro).
-#[axum_codec::derive(encode, decode)]
+// Same goes for `validator`.
+#[axum_codec::apply(encode, decode)]
 struct User {
   name: String,
   age: u8,
 }
 
-async fn me() -> impl IntoCodec<User> {
+async fn me() -> impl IntoCodecResponse {
   User {
     name: "Alice".into(),
     age: 42,
@@ -65,10 +66,10 @@ async fn manual_me(accept: Accept, Codec(user): Codec<User>) -> impl IntoRespons
     name: "Alice".into(),
     age: 42,
   })
-  .to_response(accept)
+  .into_codec_response(accept)
 }
 
-#[axum_codec::derive(encode)]
+#[axum_codec::apply(encode)]
 struct Greeting {
   message: String,
 }
@@ -96,13 +97,15 @@ async fn main() {
 
 # Feature flags
 
-- `std`*: Enables various standard library features for dependency crates.
+- `macros`: Enables the `axum_codec::apply` attribute macro.
 - `json`*: Enables [`JSON`](https://github.com/serde-rs/json) support.
 - `msgpack`: Enables [`MessagePack`](https://github.com/3Hren/msgpack-rust) support.
 - `bincode`: Enables [`Bincode`](https://github.com/bincode-org/bincode) support.
 - `bitcode`: Enables [`Bitcode`](https://github.com/SoftbearStudios/bitcode) support.
 - `yaml`: Enables [`YAML`](https://github.com/dtolnay/serde-yaml/releases) support.
 - `toml`: Enables [`TOML`](https://github.com/toml-rs/toml) support.
+- `aide`: Enables support for the [`Aide`](https://github.com/tamasfe/aide) documentation library.
+- `validator`: Enables support for the [`Validator`](https://github.com/Keats/validator) validation library, validating all input when extracted with `Codec<T>`.
 
 * Enabled by default.
 

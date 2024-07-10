@@ -30,6 +30,9 @@ pub enum CodecRejection {
 	#[cfg(any(feature = "toml", feature = "yaml"))]
 	#[error(transparent)]
 	Utf8Error(#[from] core::str::Utf8Error),
+	#[cfg(feature = "validator")]
+	#[error("validatior error")]
+	Validator(#[from] validator::ValidationErrors),
 }
 
 impl IntoResponse for CodecRejection {
