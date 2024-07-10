@@ -5,7 +5,7 @@ A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
 ## Features
 
 - Supports encoding and decoding of various formats with a single extractor.
-- Provides a wrapper for [`axum::routing::method_routing`](https://docs.rs/axum/latest/axum/routing/method_routing/index.html) to automatically encode responses in the corect format according to the specified `Accept` header (with a fallback to `Content-Type`, then one of the enabled formats).
+- Provides a wrapper for [`axum::routing::method_routing`](https://docs.rs/axum/latest/axum/routing/method_routing/index.html) to automatically encode responses in the correct format according to the specified `Accept` header (with a fallback to `Content-Type`, then one of the enabled formats).
 - Provides an attribute macro (under the `macros` feature) to derive all enabled formats for a struct.
 
 Here's a quick example that can do the following:
@@ -72,12 +72,12 @@ async fn main() {
 # Feature flags
 
 - `std`*: Enables various standard library features for dependency crates.
-- `json`*: Enables `JSON` support.
-- `msgpack`: Enables `MessagePack` support.
-- `bincode`: Enables `Bincode` support.
-- `bitcode`: Enables `Bitcode` support.
-- `yaml`: Enables `YAML` support.
-- `toml`: Enables `TOML` support.
+- `json`*: Enables [`JSON`](https://github.com/serde-rs/json) support.
+- `msgpack`: Enables [`MessagePack`](https://github.com/3Hren/msgpack-rust) support.
+- `bincode`: Enables [`Bincode`](https://github.com/bincode-org/bincode) support.
+- `bitcode`: Enables [`Bitcode`](https://github.com/SoftbearStudios/bitcode) support.
+- `yaml`: Enables [`YAML`](https://github.com/dtolnay/serde-yaml/releases) support.
+- `toml`: Enables [`TOML`](https://github.com/toml-rs/toml) support.
 
 * Enabled by default.
 
