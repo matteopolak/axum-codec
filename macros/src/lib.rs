@@ -1,3 +1,6 @@
+#![allow(unused_variables)]
+#![allow(dead_code)]
+
 use proc_macro::TokenStream;
 #[cfg(any(feature = "bincode", feature = "bitcode", feature = "serde"))]
 use quote::quote;
