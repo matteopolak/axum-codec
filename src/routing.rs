@@ -7,6 +7,9 @@ use crate::{
 	CodecHandler,
 };
 
+/// A light wrapper around axum's [`MethodRouter`](axum::routing::MethodRouter) (or [`ApiMethodRouter`](aide::axum::routing::ApiMethodRouter) if the `aide` feature is enabled).
+///
+/// However, responses are expected to be [`IntoCodecResponse`] (instead of [`IntoResponse`](axum::response::IntoResponse)), as they are automatically converted to the appropriate response type when appropriate.
 pub struct MethodRouter<S = (), E = Infallible> {
 	#[cfg(not(feature = "aide"))]
 	inner: routing::MethodRouter<S, E>,

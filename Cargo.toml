@@ -1,6 +1,6 @@
 [package]
 name = "axum-codec"
-version = "0.0.5"
+version = "0.0.6"
 edition = "2021"
 description = "A multi-codec extractor and response writer for Axum"
 license = "MIT OR Apache-2.0"
@@ -36,7 +36,7 @@ axum-codec = { path = ".", features = ["full-codecs", "macros"] }
 bitcode = "0.6"
 
 [features]
-default = ["json", "macros"]
+default = ["json", "macros", "pretty-errors"]
 
 # Enables all codecs
 full-codecs = ["bincode", "bitcode", "cbor", "json", "msgpack", "toml", "yaml"]
@@ -48,6 +48,10 @@ aide = ["dep:aide", "dep:schemars", "axum-codec-macros?/aide", "axum/json", "axu
 
 # Enables support for `validator`, adds an additional `validator::Validate` bound to `T` in `Codec<T>`
 validator = ["dep:validator", "axum-codec-macros?/validator"]
+
+# Enables more verbose (and expensive) error handling machinery, but significantly
+# improves the quality of error messages for consumers of the API.
+pretty-errors = ["macros"]
 
 bincode = ["dep:bincode", "axum-codec-macros?/bincode"]
 bitcode = ["dep:bitcode", "axum-codec-macros?/bitcode"]

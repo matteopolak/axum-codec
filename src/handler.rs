@@ -10,14 +10,6 @@ use crate::{macros::all_the_tuples, Accept, Codec, CodecEncode, ContentType};
 
 pub trait IntoCodecResponse {
 	fn into_codec_response(self, content_type: ContentType) -> Response;
-
-	/// Converts the value into a response with a default content type.
-	fn into_response(self) -> Response
-	where
-		Self: Sized,
-	{
-		self.into_codec_response(ContentType::default())
-	}
 }
 
 pub struct CodecResponse(axum::response::Response);
@@ -192,7 +184,7 @@ where
 
 			let content_type = match Accept::from_request_parts(&mut parts, &state).await {
 				Ok(content_type) => content_type,
-				Err(rejection) => return rejection.into_response(),
+				Err(rejection) => match rejection {},
 			};
 
 			self().await.into_codec_response(content_type.into())
@@ -222,7 +214,7 @@ macro_rules! impl_handler {
 
 					let content_type = match Accept::from_request_parts(&mut parts, &state).await {
 						Ok(content_type) => content_type,
-						Err(rejection) => return rejection.into_response(),
+						Err(rejection) => match rejection {},
 					};
 
 					$(

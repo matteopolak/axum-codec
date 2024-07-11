@@ -12,6 +12,11 @@ mod macros;
 mod rejection;
 pub mod routing;
 
+use core::{
+	fmt::{self, Display},
+	ops::{Deref, DerefMut},
+};
+
 pub use {
 	content::ContentType, decode::CodecDecode, encode::CodecEncode, extract::Accept,
 	handler::CodecHandler, rejection::CodecRejection,
@@ -19,7 +24,7 @@ pub use {
 
 use axum::{
 	body::Bytes,
-	extract::{FromRequest, Request},
+	extract::{FromRequest, FromRequestParts, Request},
 	http::header,
 	response::{IntoResponse, Response},
 };
@@ -83,6 +88,82 @@ pub use axum_codec_macros::apply;
 /// ```
 pub struct Codec<T>(pub T);
 
+impl<T> Codec<T>
+where
+	T: CodecEncode,
+{
+	/// Consumes the [`Codec`] and returns the inner value.
+	pub fn into_inner(self) -> T {
+		self.0
+	}
+
+	/// Converts the inner value into a response with the given content type.
+	///
+	/// If serialization fails, the rejection is converted into a response. See [`encode::Error`] for possible errors.
+	pub fn to_response<C: Into<ContentType>>(&self, content_type: C) -> Response {
+		let content_type = content_type.into();
+		let bytes = match self.to_bytes(content_type) {
+			Ok(bytes) => bytes,
+			Err(rejection) => return rejection.into_response(),
+		};
+
+		([(header::CONTENT_TYPE, content_type.into_header())], bytes).into_response()
+	}
+}
+
+impl<T> Deref for Codec<T> {
+	type Target = T;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+impl<T> DerefMut for Codec<T> {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.0
+	}
+}
+
+impl<T: fmt::Display> Display for Codec<T> {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		self.0.fmt(f)
+	}
+}
+
+#[axum::async_trait]
+impl<T, S> FromRequest<S> for Codec<T>
+where
+	T: CodecDecode,
+	S: Send + Sync + 'static,
+{
+	type Rejection = Response;
+
+	async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+		let (mut parts, body) = req.into_parts();
+		let accept = match Accept::from_request_parts(&mut parts, state).await {
+			Ok(accept) => accept,
+			Err(rejection) => match rejection {},
+		};
+
+		let req = Request::from_parts(parts, body);
+
+		let content_type = req
+			.headers()
+			.get(header::CONTENT_TYPE)
+			.and_then(ContentType::from_header)
+			.unwrap_or_default();
+
+		let bytes = Bytes::from_request(req, state)
+			.await
+			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
+		let data = Codec::from_bytes(&bytes, content_type)
+			.map_err(|e| e.into_codec_response(accept.into()))?;
+
+		Ok(data)
+	}
+}
+
 #[cfg(feature = "aide")]
 impl<T> aide::operation::OperationInput for Codec<T>
 where
@@ -132,43 +213,6 @@ where
 	}
 }
 
-impl<T> Codec<T>
-where
-	T: CodecEncode,
-{
-	pub fn to_response<C: Into<ContentType>>(&self, content_type: C) -> Response {
-		let content_type = content_type.into();
-		let bytes = match self.to_bytes(content_type) {
-			Ok(bytes) => bytes,
-			Err(rejection) => return rejection.into_response(),
-		};
-
-		([(header::CONTENT_TYPE, content_type.into_header())], bytes).into_response()
-	}
-}
-
-#[axum::async_trait]
-impl<T, S> FromRequest<S> for Codec<T>
-where
-	T: CodecDecode,
-	S: Send + Sync + 'static,
-{
-	type Rejection = CodecRejection;
-
-	async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
-		let content_type = req
-			.headers()
-			.get(header::CONTENT_TYPE)
-			.and_then(ContentType::from_header)
-			.unwrap_or_default();
-
-		let bytes = Bytes::from_request(req, state).await?;
-		let data = Codec::from_bytes(&bytes, content_type)?;
-
-		Ok(data)
-	}
-}
-
 /// Defines the [`CodecDecode`] and [`CodecEncode`] traits with the given constraints.
 macro_rules! codec_trait {
 	($id:ident, $($constraint:tt)*) => {
@@ -182,6 +226,7 @@ macro_rules! codec_trait {
 }
 
 pub(crate) use codec_trait;
+use handler::IntoCodecResponse;
 
 #[cfg(test)]
 mod test {

@@ -1,9 +1,11 @@
+use std::convert::Infallible;
+
 use axum::{
 	extract::FromRequestParts,
 	http::{header, request::Parts},
 };
 
-use crate::{CodecRejection, ContentType};
+use crate::ContentType;
 
 /// Extractor for the request's desired response [`ContentType`].
 ///
@@ -54,7 +56,7 @@ impl<S> FromRequestParts<S> for Accept
 where
 	S: Send + Sync + 'static,
 {
-	type Rejection = CodecRejection;
+	type Rejection = Infallible;
 
 	async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
 		let header = None

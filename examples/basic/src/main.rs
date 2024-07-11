@@ -1,4 +1,7 @@
-use axum::{extract::State, Router};
+use axum::{
+	extract::{DefaultBodyLimit, State},
+	Router,
+};
 use axum_codec::{
 	handler::IntoCodecResponse,
 	routing::{get, post},
@@ -7,7 +10,9 @@ use axum_codec::{
 
 #[axum_codec::apply(encode, decode)]
 struct User {
+	#[validate(length(min = 1, max = 100))]
 	name: String,
+	#[validate(range(min = 0, max = 150))]
 	age: u8,
 }
 
@@ -39,6 +44,7 @@ async fn main() {
 		.route("/me", get(me).into())
 		.route("/greet", post(greet).into())
 		.route("/state", get(state).into())
+		.layer(DefaultBodyLimit::max(1024))
 		.with_state("Hello, world!".to_string());
 
 	let listener = tokio::net::TcpListener::bind(("127.0.0.1", 3000))
