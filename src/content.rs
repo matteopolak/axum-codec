@@ -10,6 +10,8 @@ pub enum ContentType {
 	Bincode,
 	#[cfg(feature = "bitcode")]
 	Bitcode,
+	#[cfg(feature = "cbor")]
+	Cbor,
 	#[cfg(feature = "yaml")]
 	Yaml,
 	#[cfg(feature = "toml")]
@@ -21,10 +23,11 @@ pub enum ContentType {
 	feature = "msgpack",
 	feature = "bincode",
 	feature = "bitcode",
+	feature = "cbor",
 	feature = "yaml",
 	feature = "toml"
 )))]
-compile_error!("At least one of the following features must be enabled: `json`, `msgpack`, `bincode`, `bitcode`, `yaml`, `toml`.");
+compile_error!("At least one of the following features must be enabled: `json`, `msgpack`, `bincode`, `bitcode`, `cbor`, `yaml`, `toml`.");
 
 impl Default for ContentType {
 	#[allow(unreachable_code)]
@@ -37,6 +40,8 @@ impl Default for ContentType {
 		return Self::Bincode;
 		#[cfg(feature = "bitcode")]
 		return Self::Bitcode;
+		#[cfg(feature = "cbor")]
+		return Self::Cbor;
 		#[cfg(feature = "yaml")]
 		return Self::Yaml;
 		#[cfg(feature = "toml")]
@@ -75,21 +80,23 @@ impl ContentType {
 		let mime = header.to_str().ok()?.parse::<mime::Mime>().ok()?;
 		let subtype = mime.suffix().map_or_else(|| mime.subtype(), |name| name);
 
-		match (mime.type_().as_str(), subtype.as_str()) {
+		Some(match (mime.type_().as_str(), subtype.as_str()) {
 			#[cfg(feature = "json")]
-			("application", "json") => Some(Self::Json),
+			("application", "json") => Self::Json,
 			#[cfg(feature = "msgpack")]
-			("application", "msgpack" | "vnd.msgpack" | "x-msgpack" | "x.msgpack") => Some(Self::MsgPack),
+			("application", "msgpack" | "vnd.msgpack" | "x-msgpack" | "x.msgpack") => Self::MsgPack,
 			#[cfg(feature = "bincode")]
-			("application", "bincode" | "vnd.bincode" | "x-bincode" | "x.bincode") => Some(Self::Bincode),
+			("application", "bincode" | "vnd.bincode" | "x-bincode" | "x.bincode") => Self::Bincode,
 			#[cfg(feature = "bitcode")]
-			("application", "bitcode" | "vnd.bitcode" | "x-bitcode" | "x.bitcode") => Some(Self::Bitcode),
+			("application", "bitcode" | "vnd.bitcode" | "x-bitcode" | "x.bitcode") => Self::Bitcode,
+			#[cfg(feature = "cbor")]
+			("application", "cbor") => Self::Cbor,
 			#[cfg(feature = "yaml")]
-			("application" | "text", "yaml" | "yml" | "x-yaml") => Some(Self::Yaml),
+			("application" | "text", "yaml" | "yml" | "x-yaml") => Self::Yaml,
 			#[cfg(feature = "toml")]
-			("application" | "text", "toml" | "x-toml" | "vnd.toml") => Some(Self::Toml),
-			_ => None,
-		}
+			("application" | "text", "toml" | "x-toml" | "vnd.toml") => Self::Toml,
+			_ => return None,
+		})
 	}
 
 	/// Converts the [`ContentType`] into a [`HeaderValue`].
@@ -130,6 +137,8 @@ impl ContentType {
 			Self::Bincode => "application/vnd.bincode",
 			#[cfg(feature = "bitcode")]
 			Self::Bitcode => "application/vnd.bitcode",
+			#[cfg(feature = "cbor")]
+			Self::Cbor => "application/cbor",
 			#[cfg(feature = "yaml")]
 			Self::Yaml => "application/x-yaml",
 			#[cfg(feature = "toml")]

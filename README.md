@@ -14,7 +14,7 @@ A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
 
 ## Todo
 
-- [x] Support `bitcode`, `bincode`, `rmp`, `toml`, `serde_yaml`, and `serde_json`
+- [x] Support `bitcode`, `bincode`, `ciborium`, `rmp`, `toml`, `serde_yaml`, and `serde_json`
 - [x] Add custom `MethodRouter` to automatically encode responses in the correct format
 - [x] Add macro to derive all enabled formats for a struct/enum
 - [x] Add support for [`aide`](https://github.com/tamasfe/aide)
@@ -104,6 +104,7 @@ async fn main() {
 - `msgpack`: Enables [`MessagePack`](https://github.com/3Hren/msgpack-rust) support.
 - `bincode`: Enables [`Bincode`](https://github.com/bincode-org/bincode) support.
 - `bitcode`: Enables [`Bitcode`](https://github.com/SoftbearStudios/bitcode) support.
+- `cbor`: Enables [`CBOR`](https://github.com/enarx/ciborium) support.
 - `yaml`: Enables [`YAML`](https://github.com/dtolnay/serde-yaml/releases) support.
 - `toml`: Enables [`TOML`](https://github.com/toml-rs/toml) support.
 - `aide`: Enables support for the [`Aide`](https://github.com/tamasfe/aide) documentation library.

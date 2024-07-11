@@ -118,6 +118,19 @@ where
 		rmp_serde::from_slice(bytes).map(Self)
 	}
 
+	/// Attemps to deserialize the given bytes as [CBOR](https://cbor.io).
+	/// Does not perform any validation if the `validator` feature is enabled. For validation,
+	/// use [`Self::from_bytes`].
+	///
+	/// # Errors
+	///
+	/// See [`ciborium::from_slice`].
+	#[cfg(feature = "cbor")]
+	#[inline]
+	pub fn from_cbor(bytes: &[u8]) -> Result<Self, ciborium::de::Error<std::io::Error>> {
+		ciborium::from_reader(bytes).map(Self)
+	}
+
 	/// Attempts to deserialize the given text as [YAML](https://yaml.org).
 	/// Does not perform any validation if the `validator` feature is enabled. For validation,
 	/// use [`Self::from_bytes`].
@@ -196,6 +209,8 @@ impl<T> Codec<T> {
 			ContentType::Bincode => Self::from_bincode(bytes)?,
 			#[cfg(feature = "bitcode")]
 			ContentType::Bitcode => Self::from_bitcode(bytes)?,
+			#[cfg(feature = "cbor")]
+			ContentType::Cbor => Self::from_cbor(bytes)?,
 			#[cfg(feature = "yaml")]
 			ContentType::Yaml => Self::from_yaml(core::str::from_utf8(bytes)?)?,
 			#[cfg(feature = "toml")]

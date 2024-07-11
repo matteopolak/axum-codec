@@ -45,6 +45,9 @@ pub enum Error {
 	#[cfg(feature = "msgpack")]
 	#[error(transparent)]
 	MsgPack(#[from] rmp_serde::encode::Error),
+	#[cfg(feature = "cbor")]
+	#[error(transparent)]
+	Cbor(#[from] ciborium::ser::Error<std::io::Error>),
 	#[cfg(feature = "bincode")]
 	#[error(transparent)]
 	Bincode(#[from] bincode::error::EncodeError),
@@ -92,6 +95,19 @@ where
 	#[inline]
 	pub fn to_msgpack(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
 		rmp_serde::to_vec_named(&self.0)
+	}
+
+	/// Attempts to serialize the given value as [CBOR](https://cbor.io).
+	///
+	/// # Errors
+	///
+	/// See [`ciborium::into_writer`].
+	#[cfg(feature = "cbor")]
+	#[inline]
+	pub fn to_cbor(&self) -> Result<Vec<u8>, ciborium::ser::Error<std::io::Error>> {
+		let mut buf = Vec::new();
+		ciborium::into_writer(&self.0, &mut buf)?;
+		Ok(buf)
 	}
 
 	/// Attempts to serialize the given value as [YAML](https://yaml.org).
@@ -164,6 +180,8 @@ impl<T> Codec<T> {
 			ContentType::Bincode => self.to_bincode()?,
 			#[cfg(feature = "bitcode")]
 			ContentType::Bitcode => self.to_bitcode(),
+			#[cfg(feature = "cbor")]
+			ContentType::Cbor => self.to_cbor()?,
 			#[cfg(feature = "yaml")]
 			ContentType::Yaml => self.to_yaml()?.into_bytes(),
 			#[cfg(feature = "toml")]

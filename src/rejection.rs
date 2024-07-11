@@ -15,6 +15,9 @@ pub enum CodecRejection {
 	#[cfg(feature = "msgpack")]
 	#[error(transparent)]
 	MsgPack(#[from] rmp_serde::decode::Error),
+	#[cfg(feature = "cbor")]
+	#[error(transparent)]
+	Cbor(#[from] ciborium::de::Error<std::io::Error>),
 	#[cfg(feature = "bincode")]
 	#[error(transparent)]
 	Bincode(#[from] bincode::error::DecodeError),
