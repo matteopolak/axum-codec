@@ -1,6 +1,6 @@
 [package]
 name = "axum-codec-macros"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2021"
 description = "Procedural macros for axum-codec"
 license = "MIT OR Apache-2.0"
@@ -11,13 +11,14 @@ repository = "https://github.com/matteopolak/axum-codec"
 proc-macro = true
 
 [dependencies]
+proc-macro2 = "1"
 quote = "1"
-syn = "2"
+syn = { version = "2", optional = true }
 
 [features]
-bincode = []
-bitcode = []
-serde = []
-aide = []
-validator = []
+bincode = ["dep:syn"]
+bitcode = ["dep:syn"]
+serde = ["dep:syn"]
+aide = ["dep:syn"]
+validator = ["dep:syn"]
 

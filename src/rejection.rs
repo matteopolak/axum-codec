@@ -46,6 +46,17 @@ impl IntoCodecResponse for CodecRejection {
 	}
 }
 
+#[cfg(feature = "aide")]
+impl schemars::JsonSchema for CodecRejection {
+	fn schema_name() -> String {
+		Message::schema_name()
+	}
+
+	fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+		Message::json_schema(gen)
+	}
+}
+
 #[cfg(feature = "pretty-errors")]
 impl IntoCodecResponse for CodecRejection {
 	fn into_codec_response(self, content_type: ContentType) -> Response {

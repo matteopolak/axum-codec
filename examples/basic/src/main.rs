@@ -17,10 +17,10 @@ struct User {
 }
 
 async fn me() -> impl IntoCodecResponse {
-	User {
+	Codec(User {
 		name: "Alice".into(),
 		age: 42,
-	}
+	})
 }
 
 #[axum_codec::apply(encode)]
@@ -28,14 +28,14 @@ struct Greeting {
 	message: String,
 }
 
-async fn greet(Codec(user): Codec<User>) -> Greeting {
-	Greeting {
+async fn greet(Codec(user): Codec<User>) -> Codec<Greeting> {
+	Codec(Greeting {
 		message: format!("Hello, {}! You are {} years old.", user.name, user.age),
-	}
+	})
 }
 
-async fn state(State(state): State<String>) -> Greeting {
-	Greeting { message: state }
+async fn state(State(state): State<String>) -> Codec<Greeting> {
+	Codec(Greeting { message: state })
 }
 
 #[tokio::main]

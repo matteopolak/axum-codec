@@ -27,7 +27,15 @@ pub enum ContentType {
 	feature = "yaml",
 	feature = "toml"
 )))]
-compile_error!("At least one of the following features must be enabled: `json`, `msgpack`, `bincode`, `bitcode`, `cbor`, `yaml`, `toml`.");
+const _: () = {
+	compile_error!("At least one of the following features must be enabled: `json`, `msgpack`, `bincode`, `bitcode`, `cbor`, `yaml`, `toml`.");
+
+	impl Default for ContentType {
+		fn default() -> Self {
+			unreachable!()
+		}
+	}
+};
 
 impl Default for ContentType {
 	#[allow(unreachable_code)]

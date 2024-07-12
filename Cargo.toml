@@ -1,6 +1,6 @@
 [package]
 name = "axum-codec"
-version = "0.0.6"
+version = "0.0.7"
 edition = "2021"
 description = "A multi-codec extractor and response writer for Axum"
 license = "MIT OR Apache-2.0"
@@ -13,7 +13,7 @@ members = ["macros", ".", "examples/aide-validator", "examples/basic"]
 [dependencies]
 aide = { version = "0.13", optional = true, default-features = false, features = ["axum"] }
 axum = { version = "0.7", default-features = false }
-axum-codec-macros = { path = "macros", version = "0.0.4", optional = true }
+axum-codec-macros = { path = "macros", version = "0.0.5" }
 bincode = { version = "2.0.0-rc.3", default-features = false, features = ["std"], optional = true }
 bitcode = { version = "0.6", default-features = false, optional = true }
 ciborium = { version = "0.2", optional = true }
@@ -40,21 +40,21 @@ default = ["json", "macros", "pretty-errors"]
 
 # Enables all codecs
 full-codecs = ["bincode", "bitcode", "cbor", "json", "msgpack", "toml", "yaml"]
-macros = ["dep:axum-codec-macros", "schemars?/derive", "bincode?/derive", "bitcode?/derive", "serde?/derive", "validator?/derive"]
+macros = ["schemars?/derive", "bincode?/derive", "bitcode?/derive", "serde?/derive", "validator?/derive"]
 
 # Enables support for {get,put,..}_with and relevant chaning methods
 # to add documentation to routes
-aide = ["dep:aide", "dep:schemars", "axum-codec-macros?/aide", "axum/json", "axum/form", "axum/original-uri", "axum/query", "axum/tokio", "axum/matched-path"]
+aide = ["dep:aide", "dep:schemars", "axum-codec-macros/aide", "axum/json", "axum/form", "axum/original-uri", "axum/query", "axum/tokio", "axum/matched-path"]
 
 # Enables support for `validator`, adds an additional `validator::Validate` bound to `T` in `Codec<T>`
-validator = ["dep:validator", "axum-codec-macros?/validator"]
+validator = ["dep:validator", "axum-codec-macros/validator"]
 
 # Enables more verbose (and expensive) error handling machinery, but significantly
 # improves the quality of error messages for consumers of the API.
 pretty-errors = ["macros"]
 
-bincode = ["dep:bincode", "axum-codec-macros?/bincode"]
-bitcode = ["dep:bitcode", "axum-codec-macros?/bitcode"]
+bincode = ["dep:bincode", "axum-codec-macros/bincode"]
+bitcode = ["dep:bitcode", "axum-codec-macros/bitcode"]
 cbor = ["dep:ciborium", "serde"]
 json = ["dep:serde_json", "serde"]
 msgpack = ["dep:rmp-serde", "serde"]
@@ -62,5 +62,5 @@ toml = ["dep:toml", "serde"]
 yaml = ["dep:serde_yaml", "serde"]
 
 # Should not be manually enabled, but will not cause any issues if it is.
-serde = ["dep:serde", "axum-codec-macros?/serde"]
+serde = ["dep:serde", "axum-codec-macros/serde"]
 

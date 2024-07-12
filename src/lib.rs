@@ -8,7 +8,6 @@ mod decode;
 mod encode;
 pub mod extract;
 pub mod handler;
-mod macros;
 mod rejection;
 pub mod routing;
 
@@ -43,8 +42,11 @@ pub mod __private {
 	pub use validator;
 }
 
+pub use axum_codec_macros as macros;
+
+use handler::IntoCodecResponse;
 #[cfg(feature = "macros")]
-pub use axum_codec_macros::apply;
+pub use macros::apply;
 
 /// Codec extractor / response.
 ///
@@ -165,6 +167,20 @@ where
 }
 
 #[cfg(feature = "aide")]
+impl<T> schemars::JsonSchema for Codec<T>
+where
+	T: schemars::JsonSchema,
+{
+	fn schema_name() -> String {
+		T::schema_name()
+	}
+
+	fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+		T::json_schema(gen)
+	}
+}
+
+#[cfg(feature = "aide")]
 impl<T> aide::operation::OperationInput for Codec<T>
 where
 	T: schemars::JsonSchema,
@@ -212,21 +228,6 @@ where
 		self.0.validate()
 	}
 }
-
-/// Defines the [`CodecDecode`] and [`CodecEncode`] traits with the given constraints.
-macro_rules! codec_trait {
-	($id:ident, $($constraint:tt)*) => {
-		pub trait $id: $($constraint)* {}
-		impl<T> $id for T where T: $($constraint)* {}
-	};
-	($id:ident) => {
-		pub trait $id {}
-		impl<T> $id for T {}
-	};
-}
-
-pub(crate) use codec_trait;
-use handler::IntoCodecResponse;
 
 #[cfg(test)]
 mod test {

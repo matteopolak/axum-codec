@@ -1,93 +1,12 @@
-use crate::{codec_trait, Codec, CodecRejection, ContentType};
+use crate::{Codec, CodecRejection, ContentType};
 
-#[cfg(not(feature = "validator"))]
-mod codec {
-	use super::codec_trait;
-
-	#[cfg(all(feature = "serde", feature = "bincode", feature = "bitcode"))]
-	codec_trait!(
-		CodecDecode,
-		serde::de::DeserializeOwned + bincode::Decode + bitcode::DecodeOwned
-	);
-
-	#[cfg(all(feature = "serde", feature = "bincode", not(feature = "bitcode")))]
-	codec_trait!(CodecDecode, serde::de::DeserializeOwned + bincode::Decode);
-
-	#[cfg(all(feature = "serde", not(feature = "bincode"), feature = "bitcode"))]
-	codec_trait!(
-		CodecDecode,
-		serde::de::DeserializeOwned + bitcode::DecodeOwned
-	);
-
-	#[cfg(all(feature = "serde", not(feature = "bincode"), not(feature = "bitcode")))]
-	codec_trait!(CodecDecode, serde::de::DeserializeOwned);
-
-	#[cfg(all(not(feature = "serde"), feature = "bincode", feature = "bitcode"))]
-	codec_trait!(CodecDecode, bincode::Decode + bitcode::DecodeOwned);
-
-	#[cfg(all(not(feature = "serde"), feature = "bincode", not(feature = "bitcode")))]
-	codec_trait!(CodecDecode, bincode::Decode);
-
-	#[cfg(all(not(feature = "serde"), not(feature = "bincode"), feature = "bitcode"))]
-	codec_trait!(CodecDecode, bitcode::DecodeOwned);
-
-	#[cfg(all(
-		not(feature = "serde"),
-		not(feature = "bincode"),
-		not(feature = "bitcode")
-	))]
-	codec_trait!(CodecDecode);
+crate::macros::__private_decode_trait! {
+	/// Decoder trait for deserializing bytes into all supported formats.
+	///
+	/// Note that feature flags affect this trait differently than normal. In this case,
+	/// feature flags further restrict the trait instead of being additive. This may change
+	/// in the future.
 }
-
-#[cfg(feature = "validator")]
-mod codec {
-	use super::codec_trait;
-
-	#[cfg(all(feature = "serde", feature = "bincode", feature = "bitcode"))]
-	codec_trait!(
-		CodecDecode,
-		serde::de::DeserializeOwned + bincode::Decode + bitcode::DecodeOwned + validator::Validate
-	);
-
-	#[cfg(all(feature = "serde", feature = "bincode", not(feature = "bitcode")))]
-	codec_trait!(
-		CodecDecode,
-		serde::de::DeserializeOwned + bincode::Decode + validator::Validate
-	);
-
-	#[cfg(all(feature = "serde", not(feature = "bincode"), feature = "bitcode"))]
-	codec_trait!(
-		CodecDecode,
-		serde::de::DeserializeOwned + bitcode::DecodeOwned + validator::Validate
-	);
-
-	#[cfg(all(feature = "serde", not(feature = "bincode"), not(feature = "bitcode")))]
-	codec_trait!(
-		CodecDecode,
-		serde::de::DeserializeOwned + validator::Validate
-	);
-
-	#[cfg(all(not(feature = "serde"), feature = "bincode", feature = "bitcode"))]
-	codec_trait!(
-		CodecDecode,
-		bincode::Decode + bitcode::DecodeOwned + validator::Validate
-	);
-
-	#[cfg(all(not(feature = "serde"), feature = "bincode", not(feature = "bitcode")))]
-	codec_trait!(CodecDecode, bincode::Decode + validator::Validate);
-
-	#[cfg(all(not(feature = "serde"), not(feature = "bincode"), feature = "bitcode"))]
-	codec_trait!(CodecDecode, bitcode::DecodeOwned + validator::Validate);
-
-	#[cfg(all(
-		not(feature = "serde"),
-		not(feature = "bincode"),
-		not(feature = "bitcode")
-	))]
-	codec_trait!(CodecDecode);
-}
-
-pub use codec::CodecDecode;
 
 #[cfg(feature = "serde")]
 impl<T> Codec<T>

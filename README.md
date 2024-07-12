@@ -54,11 +54,11 @@ struct User {
   age: u8,
 }
 
-async fn me() -> User {
-  User {
+async fn me() -> Codec<User> {
+  Codec(User {
     name: "Alice".into(),
     age: 42,
-  }
+  })
 }
 
 /// A manual implementation of the handler above.
@@ -77,9 +77,9 @@ struct Greeting {
 
 /// Specify `impl IntoCodecResponse`, similar to `axum`
 async fn greet(Codec(user): Codec<User>) -> impl IntoCodecResponse {
-  Greeting {
+  Codec(Greeting {
     message: format!("Hello, {}! You are {} years old.", user.name, user.age),
-  }
+  })
 }
 
 #[tokio::main]

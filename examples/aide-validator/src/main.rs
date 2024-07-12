@@ -3,6 +3,7 @@ use std::sync::Arc;
 use aide::axum::ApiRouter;
 use axum::{extract::State, response::IntoResponse, Extension};
 use axum_codec::{
+	handler::IntoCodecResponse,
 	routing::{get, post},
 	Codec,
 };
@@ -14,11 +15,11 @@ struct User {
 	age: u8,
 }
 
-async fn me() -> User {
-	User {
+async fn me() -> impl IntoCodecResponse {
+	Codec(User {
 		name: "Alice".into(),
 		age: 42,
-	}
+	})
 }
 
 #[axum_codec::apply(encode)]
@@ -26,14 +27,14 @@ struct Greeting {
 	message: String,
 }
 
-async fn greet(Codec(user): Codec<User>) -> Greeting {
-	Greeting {
+async fn greet(Codec(user): Codec<User>) -> Codec<Greeting> {
+	Codec(Greeting {
 		message: format!("Hello, {}! You are {} years old.", user.name, user.age),
-	}
+	})
 }
 
-async fn state(State(state): State<String>) -> Greeting {
-	Greeting { message: state }
+async fn state(State(state): State<String>) -> Codec<Greeting> {
+	Codec(Greeting { message: state })
 }
 
 async fn openapi(Extension(api): Extension<Arc<aide::openapi::OpenApi>>) -> impl IntoResponse {

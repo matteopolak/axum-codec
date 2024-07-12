@@ -6,52 +6,35 @@ use axum::{
 	response::{IntoResponse, Response},
 };
 
-use crate::{macros::all_the_tuples, Accept, Codec, CodecEncode, ContentType};
+use crate::{Accept, Codec, CodecEncode, ContentType};
 
+#[cfg(not(feature = "aide"))]
 pub trait IntoCodecResponse {
 	fn into_codec_response(self, content_type: ContentType) -> Response;
 }
 
-pub struct CodecResponse(axum::response::Response);
-
-impl From<Response> for CodecResponse {
-	fn from(inner: Response) -> Self {
-		Self(inner)
-	}
+#[cfg(feature = "aide")]
+pub trait IntoCodecResponse: schemars::JsonSchema {
+	fn into_codec_response(self, content_type: ContentType) -> Response;
 }
 
-impl From<CodecResponse> for Response {
-	fn from(inner: CodecResponse) -> Self {
-		inner.0
-	}
-}
-
-impl CodecResponse {
-	#[inline]
-	#[must_use]
-	pub fn into_inner(self) -> Response {
-		self.0
-	}
-}
-
-impl IntoResponse for CodecResponse {
-	fn into_response(self) -> Response {
-		self.into_inner()
-	}
-}
-
-impl IntoCodecResponse for CodecResponse {
-	fn into_codec_response(self, _content_type: ContentType) -> Response {
-		self.into_inner()
-	}
-}
-
-impl<D> IntoCodecResponse for D
+#[cfg(not(feature = "aide"))]
+impl<R> IntoCodecResponse for R
 where
-	D: CodecEncode,
+	R: IntoResponse,
 {
-	fn into_codec_response(self, content_type: ContentType) -> Response {
-		Codec(self).to_response(content_type)
+	fn into_codec_response(self, _content_type: ContentType) -> Response {
+		self.into_response()
+	}
+}
+
+#[cfg(feature = "aide")]
+impl<R> IntoCodecResponse for R
+where
+	R: IntoResponse + schemars::JsonSchema,
+{
+	fn into_codec_response(self, _content_type: ContentType) -> Response {
+		self.into_response()
 	}
 }
 
@@ -74,6 +57,10 @@ pub trait Input: aide::OperationInput {}
 #[cfg(feature = "aide")]
 impl<T> Input for T where T: aide::OperationInput {}
 
+#[diagnostic::on_unimplemented(
+	note = "Consider wrapping the return value in `Codec` if appropriate",
+	note = "Consider using `#[axum::debug_handler]` to improve the error message"
+)]
 pub trait CodecHandler<T, I: Input, D, S>: Clone + Send + 'static {
 	type Future: Future<Output = Response> + Send;
 
@@ -236,6 +223,36 @@ macro_rules! impl_handler {
 				})
 			}
 		}
+	};
+}
+
+macro_rules! all_the_tuples {
+	($name:ident) => {
+		$name!([], T1);
+		$name!([T1], T2);
+		$name!([T1, T2], T3);
+		$name!([T1, T2, T3], T4);
+		$name!([T1, T2, T3, T4], T5);
+		$name!([T1, T2, T3, T4, T5], T6);
+		$name!([T1, T2, T3, T4, T5, T6], T7);
+		$name!([T1, T2, T3, T4, T5, T6, T7], T8);
+		$name!([T1, T2, T3, T4, T5, T6, T7, T8], T9);
+		$name!([T1, T2, T3, T4, T5, T6, T7, T8, T9], T10);
+		$name!([T1, T2, T3, T4, T5, T6, T7, T8, T9, T10], T11);
+		$name!([T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11], T12);
+		$name!([T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12], T13);
+		$name!(
+			[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13],
+			T14
+		);
+		$name!(
+			[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14],
+			T15
+		);
+		$name!(
+			[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15],
+			T16
+		);
 	};
 }
 

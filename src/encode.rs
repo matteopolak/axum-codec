@@ -1,37 +1,14 @@
 use axum::response::{IntoResponse, Response};
 
-use crate::{codec_trait, Codec, ContentType};
+use crate::{Codec, ContentType};
 
-#[cfg(all(feature = "serde", feature = "bincode", feature = "bitcode"))]
-codec_trait!(
-	CodecEncode,
-	serde::Serialize + bincode::Encode + bitcode::Encode
-);
-
-#[cfg(all(feature = "serde", feature = "bincode", not(feature = "bitcode")))]
-codec_trait!(CodecEncode, serde::Serialize + bincode::Encode);
-
-#[cfg(all(feature = "serde", not(feature = "bincode"), feature = "bitcode"))]
-codec_trait!(CodecEncode, serde::Serialize + bitcode::Encode);
-
-#[cfg(all(feature = "serde", not(feature = "bincode"), not(feature = "bitcode")))]
-codec_trait!(CodecEncode, serde::Serialize);
-
-#[cfg(all(not(feature = "serde"), feature = "bincode", feature = "bitcode"))]
-codec_trait!(CodecEncode, bincode::Encode + bitcode::Encode);
-
-#[cfg(all(not(feature = "serde"), feature = "bincode", not(feature = "bitcode")))]
-codec_trait!(CodecEncode, bincode::Encode);
-
-#[cfg(all(not(feature = "serde"), not(feature = "bincode"), feature = "bitcode"))]
-codec_trait!(CodecEncode, bitcode::Encode);
-
-#[cfg(all(
-	not(feature = "serde"),
-	not(feature = "bincode"),
-	not(feature = "bitcode")
-))]
-codec_trait!(CodecEncode);
+crate::macros::__private_encode_trait! {
+	/// Encoder trait for encoding a value into any supported format.
+	///
+	/// Note that feature flags affect this trait differently than normal. In this case,
+	/// feature flags further restrict the trait instead of being additive. This may change
+	/// in the future.
+}
 
 /// Errors that can occur during encoding.
 ///
