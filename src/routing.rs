@@ -3,8 +3,8 @@ use std::convert::Infallible;
 use axum::routing;
 
 use crate::{
-	handler::{CodecHandlerFn, Input, IntoCodecResponse},
-	CodecHandler,
+	handler::{CodecHandlerFn, Input},
+	CodecHandler, IntoCodecResponse,
 };
 
 /// A light wrapper around axum's [`MethodRouter`](axum::routing::MethodRouter) (or [`ApiMethodRouter`](aide::axum::routing::ApiMethodRouter) if the `aide` feature is enabled).
@@ -98,7 +98,6 @@ macro_rules! method_router_chain_method {
 			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
 			I: Input + Send + 'static,
 			D: IntoCodecResponse + Send + 'static,
-			crate::Codec<D>: aide::OperationOutput,
 			S: Clone + Send + Sync + 'static,
 			T: 'static,
 		{
@@ -113,7 +112,6 @@ macro_rules! method_router_chain_method {
 			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
 			I: Input + Send + 'static,
 			D: IntoCodecResponse + Send + 'static,
-			crate::Codec<D>: aide::OperationOutput,
 			S: Clone + Send + Sync + 'static,
 			T: 'static,
 			F: FnOnce(aide::transform::TransformOperation) -> aide::transform::TransformOperation,
@@ -164,7 +162,6 @@ macro_rules! method_router_top_level {
 			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
 			I: Input + Send + 'static,
 			D: IntoCodecResponse + Send + 'static,
-			crate::Codec<D>: aide::OperationOutput,
 			S: Clone + Send + Sync + 'static,
 			T: 'static,
 		{
@@ -180,7 +177,6 @@ macro_rules! method_router_top_level {
 			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
 			I: Input + Send + 'static,
 			D: IntoCodecResponse + Send + Sync + 'static,
-			crate::Codec<D>: aide::OperationOutput,
 			S: Clone + Send + Sync + 'static,
 			T: 'static,
 			F: FnOnce(aide::transform::TransformOperation) -> aide::transform::TransformOperation,

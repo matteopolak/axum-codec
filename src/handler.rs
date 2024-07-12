@@ -6,46 +6,7 @@ use axum::{
 	response::{IntoResponse, Response},
 };
 
-use crate::{Accept, Codec, CodecEncode, ContentType};
-
-#[cfg(not(feature = "aide"))]
-pub trait IntoCodecResponse {
-	fn into_codec_response(self, content_type: ContentType) -> Response;
-}
-
-#[cfg(feature = "aide")]
-pub trait IntoCodecResponse: schemars::JsonSchema {
-	fn into_codec_response(self, content_type: ContentType) -> Response;
-}
-
-#[cfg(not(feature = "aide"))]
-impl<R> IntoCodecResponse for R
-where
-	R: IntoResponse,
-{
-	fn into_codec_response(self, _content_type: ContentType) -> Response {
-		self.into_response()
-	}
-}
-
-#[cfg(feature = "aide")]
-impl<R> IntoCodecResponse for R
-where
-	R: IntoResponse + schemars::JsonSchema,
-{
-	fn into_codec_response(self, _content_type: ContentType) -> Response {
-		self.into_response()
-	}
-}
-
-impl<D> IntoCodecResponse for Codec<D>
-where
-	D: CodecEncode,
-{
-	fn into_codec_response(self, content_type: ContentType) -> Response {
-		self.to_response(content_type)
-	}
-}
+use crate::{Accept, IntoCodecResponse};
 
 #[cfg(not(feature = "aide"))]
 pub trait Input {}
@@ -114,30 +75,38 @@ where
 #[cfg(feature = "aide")]
 impl<H, I, D> aide::OperationOutput for CodecHandlerFn<H, I, D>
 where
-	Codec<D>: aide::OperationOutput,
+	D: aide::OperationOutput,
 {
-	type Inner = <Codec<D> as aide::OperationOutput>::Inner;
+	type Inner = D;
 
 	fn operation_response(
 		ctx: &mut aide::gen::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Option<aide::openapi::Response> {
-		<Codec<D> as aide::OperationOutput>::operation_response(ctx, operation)
+		D::operation_response(ctx, operation)
 	}
 
 	fn inferred_responses(
 		ctx: &mut aide::gen::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Vec<(Option<u16>, aide::openapi::Response)> {
-		<Codec<D> as aide::OperationOutput>::inferred_responses(ctx, operation)
+		D::inferred_responses(ctx, operation)
 	}
 }
 
 #[cfg(feature = "aide")]
-impl<F, I, D> aide::operation::OperationHandler<I, Codec<D>> for CodecHandlerFn<F, I, D>
+impl<F, I, D> aide::operation::OperationHandler<I, crate::Codec<D>> for CodecHandlerFn<F, I, D>
 where
 	I: aide::OperationInput,
-	Codec<D>: aide::OperationOutput,
+	D: schemars::JsonSchema,
+{
+}
+
+#[cfg(feature = "aide")]
+impl<F, I, D> aide::operation::OperationHandler<I, D> for CodecHandlerFn<F, I, D>
+where
+	I: aide::OperationInput,
+	D: aide::OperationOutput,
 {
 }
 

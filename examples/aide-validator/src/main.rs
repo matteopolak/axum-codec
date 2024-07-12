@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
 use aide::axum::ApiRouter;
-use axum::{extract::State, response::IntoResponse, Extension};
+use axum::{extract::State, Extension};
 use axum_codec::{
-	handler::IntoCodecResponse,
 	routing::{get, post},
-	Codec,
+	Codec, IntoCodecResponse,
 };
 
 #[axum_codec::apply(encode, decode)]
@@ -37,7 +36,7 @@ async fn state(State(state): State<String>) -> Codec<Greeting> {
 	Codec(Greeting { message: state })
 }
 
-async fn openapi(Extension(api): Extension<Arc<aide::openapi::OpenApi>>) -> impl IntoResponse {
+async fn openapi(Extension(api): Extension<Arc<aide::openapi::OpenApi>>) -> impl IntoCodecResponse {
 	axum::Json(api)
 }
 
@@ -49,7 +48,7 @@ async fn main() {
 		.api_route("/me", get(me).into())
 		.api_route("/greet", post(greet).into())
 		.api_route("/state", get(state).into())
-		.route("/openapi.json", axum::routing::get(openapi))
+		.route("/openapi.json", get(openapi))
 		.finish_api(&mut api)
 		.layer(Extension(Arc::new(api)))
 		.with_state("Hello, world!".to_string());

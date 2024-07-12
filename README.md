@@ -29,7 +29,7 @@ Here's a quick example that can do the following:
 ```rust
 use axum::{Router, response::IntoResponse};
 use axum_codec::{
-  handler::IntoCodecResponse,
+  response::IntoCodecResponse,
   routing::{get, post},
   Codec,
   extract::Accept,

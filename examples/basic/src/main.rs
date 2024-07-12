@@ -3,9 +3,8 @@ use axum::{
 	Router,
 };
 use axum_codec::{
-	handler::IntoCodecResponse,
 	routing::{get, post},
-	Codec,
+	Codec, IntoCodecResponse,
 };
 
 #[axum_codec::apply(encode, decode)]

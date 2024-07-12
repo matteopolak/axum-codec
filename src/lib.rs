@@ -9,6 +9,7 @@ mod encode;
 pub mod extract;
 pub mod handler;
 mod rejection;
+pub mod response;
 pub mod routing;
 
 use core::{
@@ -18,7 +19,7 @@ use core::{
 
 pub use {
 	content::ContentType, decode::CodecDecode, encode::CodecEncode, extract::Accept,
-	handler::CodecHandler, rejection::CodecRejection,
+	handler::CodecHandler, rejection::CodecRejection, response::IntoCodecResponse,
 };
 
 use axum::{
@@ -44,7 +45,6 @@ pub mod __private {
 
 pub use axum_codec_macros as macros;
 
-use handler::IntoCodecResponse;
 #[cfg(feature = "macros")]
 pub use macros::apply;
 
@@ -167,20 +167,6 @@ where
 }
 
 #[cfg(feature = "aide")]
-impl<T> schemars::JsonSchema for Codec<T>
-where
-	T: schemars::JsonSchema,
-{
-	fn schema_name() -> String {
-		T::schema_name()
-	}
-
-	fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-		T::json_schema(gen)
-	}
-}
-
-#[cfg(feature = "aide")]
 impl<T> aide::operation::OperationInput for Codec<T>
 where
 	T: schemars::JsonSchema,
@@ -202,7 +188,7 @@ impl<T> aide::operation::OperationOutput for Codec<T>
 where
 	T: schemars::JsonSchema,
 {
-	type Inner = <axum::Json<T> as aide::operation::OperationOutput>::Inner;
+	type Inner = T;
 
 	fn operation_response(
 		ctx: &mut aide::gen::GenContext,

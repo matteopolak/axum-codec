@@ -1,6 +1,6 @@
 use axum::{extract::rejection::BytesRejection, response::Response};
 
-use crate::{handler::IntoCodecResponse, ContentType};
+use crate::{ContentType, IntoCodecResponse};
 
 /// Rejection used for [`Codec`](crate::Codec).
 ///
@@ -47,13 +47,21 @@ impl IntoCodecResponse for CodecRejection {
 }
 
 #[cfg(feature = "aide")]
-impl schemars::JsonSchema for CodecRejection {
-	fn schema_name() -> String {
-		Message::schema_name()
+impl aide::OperationOutput for CodecRejection {
+	type Inner = Message;
+
+	fn operation_response(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Option<aide::openapi::Response> {
+		axum::Json::<Message>::operation_response(ctx, operation)
 	}
 
-	fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-		Message::json_schema(gen)
+	fn inferred_responses(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Vec<(Option<u16>, aide::openapi::Response)> {
+		axum::Json::<Message>::inferred_responses(ctx, operation)
 	}
 }
 
@@ -75,6 +83,25 @@ pub struct Message {
 	/// A human-readable error message in English.
 	// TODO: use Cow<'static, str> when bitcode supports it
 	pub content: String,
+}
+
+#[cfg(feature = "aide")]
+impl aide::OperationOutput for Message {
+	type Inner = Self;
+
+	fn operation_response(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Option<aide::openapi::Response> {
+		axum::Json::<Self>::operation_response(ctx, operation)
+	}
+
+	fn inferred_responses(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Vec<(Option<u16>, aide::openapi::Response)> {
+		axum::Json::<Self>::inferred_responses(ctx, operation)
+	}
 }
 
 impl CodecRejection {

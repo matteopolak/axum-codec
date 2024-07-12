@@ -253,17 +253,6 @@ mod __private {
 			});
 		}
 
-		#[cfg(feature = "aide")]
-		{
-			if !constraints.is_empty() {
-				constraints.extend(quote! { + });
-			}
-
-			constraints.extend(quote! {
-				schemars::JsonSchema
-			});
-		}
-
 		#[cfg(feature = "validator")]
 		{
 			if !constraints.is_empty() {
@@ -347,17 +336,6 @@ mod __private {
 
 			constraints.extend(quote! {
 				bitcode::Encode
-			});
-		}
-
-		#[cfg(feature = "aide")]
-		{
-			if !constraints.is_empty() {
-				constraints.extend(quote! { + });
-			}
-
-			constraints.extend(quote! {
-				schemars::JsonSchema
 			});
 		}
 
