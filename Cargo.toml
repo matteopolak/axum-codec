@@ -1,6 +1,6 @@
 [package]
 name = "axum-codec"
-version = "0.0.7"
+version = "0.0.8"
 edition = "2021"
 description = "A multi-codec extractor and response writer for Axum"
 license = "MIT OR Apache-2.0"
@@ -13,7 +13,7 @@ members = ["macros", ".", "examples/aide-validator", "examples/basic"]
 [dependencies]
 aide = { version = "0.13", optional = true, default-features = false, features = ["axum"] }
 axum = { version = "0.7", default-features = false }
-axum-codec-macros = { path = "macros", version = "0.0.6" }
+axum-codec-macros = { path = "macros", version = "0.0.7" }
 bincode = { version = "2.0.0-rc.3", default-features = false, features = ["std"], optional = true }
 bitcode = { version = "0.6", default-features = false, optional = true }
 ciborium = { version = "0.2", optional = true }

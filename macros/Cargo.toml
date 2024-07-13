@@ -1,6 +1,6 @@
 [package]
 name = "axum-codec-macros"
-version = "0.0.6"
+version = "0.0.7"
 edition = "2021"
 description = "Procedural macros for axum-codec"
 license = "MIT OR Apache-2.0"
