@@ -1,4 +1,9 @@
-use axum::http::HeaderValue;
+use std::convert::Infallible;
+
+use axum::{
+	extract::FromRequestParts,
+	http::{header, request::Parts, HeaderValue},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ContentType {
@@ -37,6 +42,15 @@ const _: () = {
 	}
 };
 
+#[cfg(any(
+	feature = "json",
+	feature = "msgpack",
+	feature = "bincode",
+	feature = "bitcode",
+	feature = "cbor",
+	feature = "yaml",
+	feature = "toml"
+))]
 impl Default for ContentType {
 	#[allow(unreachable_code)]
 	fn default() -> Self {
@@ -154,5 +168,81 @@ impl ContentType {
 		};
 
 		HeaderValue::from_static(text)
+	}
+}
+
+#[axum::async_trait]
+impl<S> FromRequestParts<S> for ContentType {
+	type Rejection = Infallible;
+
+	async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+		let header = parts
+			.headers
+			.get(header::CONTENT_TYPE)
+			.and_then(Self::from_header);
+
+		Ok(header.unwrap_or_default())
+	}
+}
+
+/// Extractor for the request's desired response [`ContentType`].
+///
+/// # Examples
+///
+/// ```edition2021
+/// # use axum_codec::{Accept, Codec};
+/// # use axum::{http::HeaderValue, response::IntoResponse};
+/// # use serde::Serialize;
+/// #
+/// #[axum_codec::apply(encode)]
+/// struct User {
+///   name: String,
+///   age: u8,
+/// }
+///
+/// fn get_user(accept: Accept) -> impl IntoResponse {
+///   Codec(User {
+///     name: "Alice".into(),
+///     age: 42,
+///   })
+///   .to_response(accept)
+/// }
+/// #
+/// # fn main() {}
+/// ```
+#[derive(Debug, Clone, Copy)]
+pub struct Accept(ContentType);
+
+impl Accept {
+	/// Returns the request's desired response [`ContentType`].
+	#[inline]
+	#[must_use]
+	pub fn content_type(self) -> ContentType {
+		self.0
+	}
+}
+
+impl From<Accept> for ContentType {
+	#[inline]
+	fn from(accept: Accept) -> Self {
+		accept.0
+	}
+}
+
+#[axum::async_trait]
+impl<S> FromRequestParts<S> for Accept
+where
+	S: Send + Sync + 'static,
+{
+	type Rejection = Infallible;
+
+	async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+		let header = None
+			.or_else(|| parts.headers.get(header::ACCEPT))
+			.or_else(|| parts.headers.get(header::CONTENT_TYPE))
+			.and_then(ContentType::from_header)
+			.unwrap_or_default();
+
+		Ok(Self(header))
 	}
 }

@@ -1,20 +1,12 @@
-#[cfg(not(any(
+/// A utility macro for automatically deriving the correct traits
+/// depending on the enabled features.
+#[cfg(any(
 	feature = "bincode",
 	feature = "bitcode",
 	feature = "serde",
 	feature = "aide",
 	feature = "validator"
-)))]
-mod apply {
-	use proc_macro::TokenStream;
-
-	pub fn apply(_attr: TokenStream, input: TokenStream) -> TokenStream {
-		input
-	}
-}
-
-/// A utility macro for automatically deriving the correct traits
-/// depending on the enabled features.
+))]
 #[proc_macro_attribute]
 pub fn apply(
 	attr: proc_macro::TokenStream,
