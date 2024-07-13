@@ -144,7 +144,7 @@ impl<T> Codec<T> {
 	///
 	/// # Errors
 	///
-	/// See [`CodecRejection`].
+	/// See [`Error`].
 	pub fn to_bytes(&self, content_type: ContentType) -> Result<Vec<u8>, Error>
 	where
 		T: CodecEncode,

@@ -12,7 +12,7 @@ use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoC
 
 /// Codec extractor / response.
 ///
-/// The serialized data is not specified, unlike [`axum::Json`]. Upon deserialization, the request's
+/// The serialized data is not specified. Upon deserialization, the request's
 /// `Content-Type` header is used to determine the format of the data.
 ///
 /// By default, only JSON is supported. To enable other formats, use the corresponding feature flags.
@@ -55,7 +55,7 @@ where
 
 	/// Converts the inner value into a response with the given content type.
 	///
-	/// If serialization fails, the rejection is converted into a response. See [`encode::Error`] for possible errors.
+	/// If serialization fails, the rejection is converted into a response. See [`encode::Error`](crate::encode::Error) for possible errors.
 	pub fn to_response<C: Into<ContentType>>(&self, content_type: C) -> Response {
 		let content_type = content_type.into();
 		let bytes = match self.to_bytes(content_type) {
