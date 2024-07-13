@@ -1,0 +1,16 @@
+[package]
+name = "todo-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aide = { version = "0.13", features = ["axum"] }
+axum = "0.7"
+serde = { version = "1", features = ["derive", "rc"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+axum-codec = { path = "../..", features = ["full-codecs", "macros", "aide", "validator", "pretty-errors"] }
+bitcode = "0.6"
+bincode = "2.0.0-rc.3"
+schemars = { version = "0.8", features = ["derive"] }
+validator = "0.18"
+

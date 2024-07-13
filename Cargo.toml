@@ -8,7 +8,7 @@ authors = ["Matthew Polak <contact@matteopolak.com>"]
 repository = "https://github.com/matteopolak/axum-codec"
 
 [workspace]
-members = ["macros", ".", "examples/aide-validator", "examples/basic"]
+members = ["macros", ".", "examples/*"]
 
 [dependencies]
 aide = { version = "0.13", optional = true, default-features = false, features = ["axum"] }

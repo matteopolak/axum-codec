@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use aide::axum::ApiRouter;
-use axum::{extract::State, Extension};
+use axum::{extract::State, response::IntoResponse, Extension};
 use axum_codec::{
 	routing::{get, post},
 	Codec, IntoCodecResponse,
@@ -37,7 +37,7 @@ async fn state(State(state): State<String>) -> Codec<Greeting> {
 }
 
 async fn openapi(Extension(api): Extension<Arc<aide::openapi::OpenApi>>) -> impl IntoCodecResponse {
-	axum::Json(api)
+	axum::Json(api).into_response()
 }
 
 #[tokio::main]

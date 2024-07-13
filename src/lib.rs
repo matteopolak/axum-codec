@@ -8,7 +8,7 @@ mod decode;
 mod encode;
 pub mod extract;
 pub mod handler;
-mod rejection;
+pub mod rejection;
 pub mod response;
 pub mod routing;
 
