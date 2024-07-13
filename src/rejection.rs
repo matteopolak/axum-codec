@@ -113,17 +113,6 @@ impl aide::OperationOutput for Message {
 
 impl CodecRejection {
 	/// Returns the HTTP status code for the rejection.
-	///
-	/// # Examples
-	///
-	/// ```edition2021
-	/// # use axum_codec::CodecRejection;
-	/// # use axum::http::StatusCode;
-	/// #
-	/// let rejection = CodecRejection::UnsupportedContentType("application/xml".parse().unwrap());
-	///
-	/// assert_eq!(rejection.status_code(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
-	/// ```
 	#[must_use]
 	pub fn status_code(&self) -> StatusCode {
 		if matches!(self, Self::Bytes(..)) {

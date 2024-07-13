@@ -134,8 +134,6 @@ impl<T> Codec<T> {
 			ContentType::Yaml => Self::from_yaml(core::str::from_utf8(bytes)?)?,
 			#[cfg(feature = "toml")]
 			ContentType::Toml => Self::from_toml(core::str::from_utf8(bytes)?)?,
-			#[allow(unreachable_patterns)]
-			_ => return Err(CodecRejection::UnsupportedContentType(content_type)),
 		};
 
 		#[cfg(feature = "validator")]
