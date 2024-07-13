@@ -1,4 +1,4 @@
-use axum::{extract::rejection::BytesRejection, response::Response};
+use axum::{extract::rejection::BytesRejection, http::StatusCode, response::Response};
 
 use crate::{ContentType, IntoCodecResponse};
 
@@ -7,6 +7,7 @@ use crate::{ContentType, IntoCodecResponse};
 /// Contains one variant for each way the [`Codec`](crate::Codec) extractor
 /// can fail.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum CodecRejection {
 	#[error(transparent)]
 	Bytes(#[from] BytesRejection),
@@ -42,7 +43,10 @@ pub enum CodecRejection {
 #[cfg(not(feature = "pretty-errors"))]
 impl IntoCodecResponse for CodecRejection {
 	fn into_codec_response(self, _content_type: ContentType) -> Response {
-		self.to_string().into_response()
+		let mut response = self.to_string().into_response();
+
+		*response.status_mut() = self.status_code();
+		response
 	}
 }
 
@@ -68,7 +72,10 @@ impl aide::OperationOutput for CodecRejection {
 #[cfg(feature = "pretty-errors")]
 impl IntoCodecResponse for CodecRejection {
 	fn into_codec_response(self, content_type: ContentType) -> Response {
-		crate::Codec(self.message()).into_codec_response(content_type)
+		let mut response = crate::Codec(self.message()).into_codec_response(content_type);
+
+		*response.status_mut() = self.status_code();
+		response
 	}
 }
 
@@ -105,6 +112,27 @@ impl aide::OperationOutput for Message {
 }
 
 impl CodecRejection {
+	/// Returns the HTTP status code for the rejection.
+	///
+	/// # Examples
+	///
+	/// ```edition2021
+	/// # use axum_codec::CodecRejection;
+	/// # use axum::http::StatusCode;
+	/// #
+	/// let rejection = CodecRejection::UnsupportedContentType("application/xml".parse().unwrap());
+	///
+	/// assert_eq!(rejection.status_code(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
+	/// ```
+	#[must_use]
+	pub fn status_code(&self) -> StatusCode {
+		if matches!(self, Self::Bytes(..)) {
+			StatusCode::PAYLOAD_TOO_LARGE
+		} else {
+			StatusCode::BAD_REQUEST
+		}
+	}
+
 	/// Consumes the rejection and returns a pretty [`Message`] representing the error.
 	///
 	/// Useful for sending a detailed error message to the client, but not so much

@@ -15,6 +15,7 @@ crate::macros::__private_encode_trait! {
 /// In debug mode this will include the error message. In release mode it will
 /// only include a status code of `500 Internal Server Error`.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum Error {
 	#[cfg(feature = "json")]
 	#[error(transparent)]

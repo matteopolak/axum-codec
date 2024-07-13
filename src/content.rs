@@ -1,4 +1,5 @@
-use std::convert::Infallible;
+use core::fmt;
+use std::{convert::Infallible, str::FromStr};
 
 use axum::{
 	extract::FromRequestParts,
@@ -6,6 +7,7 @@ use axum::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ContentType {
 	#[cfg(feature = "json")]
 	Json,
@@ -71,6 +73,47 @@ impl Default for ContentType {
 	}
 }
 
+impl fmt::Display for ContentType {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		f.write_str(self.as_str())
+	}
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum FromStrError {
+	#[error("invalid content type")]
+	InvalidContentType,
+	#[error(transparent)]
+	Mime(#[from] mime::FromStrError),
+}
+
+impl FromStr for ContentType {
+	type Err = FromStrError;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		let mime = s.parse::<mime::Mime>()?;
+		let subtype = mime.suffix().unwrap_or_else(|| mime.subtype());
+
+		Ok(match (mime.type_().as_str(), subtype.as_str()) {
+			#[cfg(feature = "json")]
+			("application", "json") => Self::Json,
+			#[cfg(feature = "msgpack")]
+			("application", "msgpack" | "vnd.msgpack" | "x-msgpack" | "x.msgpack") => Self::MsgPack,
+			#[cfg(feature = "bincode")]
+			("application", "bincode" | "vnd.bincode" | "x-bincode" | "x.bincode") => Self::Bincode,
+			#[cfg(feature = "bitcode")]
+			("application", "bitcode" | "vnd.bitcode" | "x-bitcode" | "x.bitcode") => Self::Bitcode,
+			#[cfg(feature = "cbor")]
+			("application", "cbor") => Self::Cbor,
+			#[cfg(feature = "yaml")]
+			("application" | "text", "yaml" | "yml" | "x-yaml") => Self::Yaml,
+			#[cfg(feature = "toml")]
+			("application" | "text", "toml" | "x-toml" | "vnd.toml") => Self::Toml,
+			_ => return Err(FromStrError::InvalidContentType),
+		})
+	}
+}
+
 impl ContentType {
 	/// Attempts to parse the given [`HeaderValue`] into a [`ContentType`]
 	/// by treating it as a MIME type.
@@ -99,26 +142,36 @@ impl ContentType {
 	/// assert_eq!(content_type, ContentType::MsgPack);
 	/// # }
 	pub fn from_header(header: &HeaderValue) -> Option<Self> {
-		let mime = header.to_str().ok()?.parse::<mime::Mime>().ok()?;
-		let subtype = mime.suffix().map_or_else(|| mime.subtype(), |name| name);
+		header.to_str().ok()?.parse().ok()
+	}
 
-		Some(match (mime.type_().as_str(), subtype.as_str()) {
+	/// Returns the MIME type as a string slice.
+	///
+	/// ```edition2021
+	/// # use axum_codec::ContentType;
+	/// #
+	/// let content_type = ContentType::Json;
+	///
+	/// assert_eq!(content_type.as_str(), "application/json");
+	/// ```
+	#[must_use]
+	pub fn as_str(&self) -> &'static str {
+		match self {
 			#[cfg(feature = "json")]
-			("application", "json") => Self::Json,
+			Self::Json => "application/json",
 			#[cfg(feature = "msgpack")]
-			("application", "msgpack" | "vnd.msgpack" | "x-msgpack" | "x.msgpack") => Self::MsgPack,
+			Self::MsgPack => "application/vnd.msgpack",
 			#[cfg(feature = "bincode")]
-			("application", "bincode" | "vnd.bincode" | "x-bincode" | "x.bincode") => Self::Bincode,
+			Self::Bincode => "application/vnd.bincode",
 			#[cfg(feature = "bitcode")]
-			("application", "bitcode" | "vnd.bitcode" | "x-bitcode" | "x.bitcode") => Self::Bitcode,
+			Self::Bitcode => "application/vnd.bitcode",
 			#[cfg(feature = "cbor")]
-			("application", "cbor") => Self::Cbor,
+			Self::Cbor => "application/cbor",
 			#[cfg(feature = "yaml")]
-			("application" | "text", "yaml" | "yml" | "x-yaml") => Self::Yaml,
+			Self::Yaml => "application/x-yaml",
 			#[cfg(feature = "toml")]
-			("application" | "text", "toml" | "x-toml" | "vnd.toml") => Self::Toml,
-			_ => return None,
-		})
+			Self::Toml => "text/toml",
+		}
 	}
 
 	/// Converts the [`ContentType`] into a [`HeaderValue`].
@@ -150,24 +203,7 @@ impl ContentType {
 	/// # }
 	#[must_use]
 	pub fn into_header(self) -> HeaderValue {
-		let text = match self {
-			#[cfg(feature = "json")]
-			Self::Json => "application/json",
-			#[cfg(feature = "msgpack")]
-			Self::MsgPack => "application/vnd.msgpack",
-			#[cfg(feature = "bincode")]
-			Self::Bincode => "application/vnd.bincode",
-			#[cfg(feature = "bitcode")]
-			Self::Bitcode => "application/vnd.bitcode",
-			#[cfg(feature = "cbor")]
-			Self::Cbor => "application/cbor",
-			#[cfg(feature = "yaml")]
-			Self::Yaml => "application/x-yaml",
-			#[cfg(feature = "toml")]
-			Self::Toml => "text/toml",
-		};
-
-		HeaderValue::from_static(text)
+		HeaderValue::from_static(self.as_str())
 	}
 }
 
