@@ -16,13 +16,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: toolchain
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup rust toolchain
+        id: toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly
           components: rustfmt, clippy
-      - name: cache
+      - name: setup cache
         uses: actions/cache@v4
         with:
           path: |
