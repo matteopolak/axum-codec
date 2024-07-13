@@ -31,8 +31,7 @@ use axum::{Router, response::IntoResponse};
 use axum_codec::{
   response::IntoCodecResponse,
   routing::{get, post},
-  Codec,
-  extract::Accept,
+  Codec, Accept,
 };
 
 // Shorthand for the following (assuming all features are enabled):
@@ -62,12 +61,12 @@ async fn me() -> Codec<User> {
 }
 
 /// A manual implementation of the handler above.
-async fn manual_me(accept: Accept, Codec(user): Codec<User>) -> impl IntoResponse {
+async fn manual_me(accept: Accept) -> impl IntoResponse {
   Codec(User {
     name: "Alice".into(),
     age: 42,
   })
-  .into_codec_response(accept.content_type())
+  .into_codec_response(accept.into())
 }
 
 #[axum_codec::apply(encode)]
@@ -86,7 +85,7 @@ async fn greet(Codec(user): Codec<User>) -> impl IntoCodecResponse {
 async fn main() {
   let app: Router = Router::new()
     .route("/me", get(me).into())
-    .route("/manual", axum::routing::post(manual_me))
+    .route("/manual", axum::routing::get(manual_me))
     .route("/greet", post(greet).into());
 
   let listener = tokio::net::TcpListener::bind(("127.0.0.1", 3000))
