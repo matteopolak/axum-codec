@@ -80,10 +80,7 @@ impl IntoCodecResponse for CodecRejection {
 }
 
 #[cfg(feature = "pretty-errors")]
-use crate as axum_codec;
-
-#[cfg(feature = "pretty-errors")]
-#[crate::apply(encode)]
+#[crate::apply(encode, crate = "crate")]
 pub struct Message {
 	/// A unique error code, useful for localization.
 	pub code: &'static str,

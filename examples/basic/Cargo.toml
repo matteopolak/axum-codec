@@ -8,7 +8,6 @@ axum = "0.7"
 serde = { version = "1", features = ["derive", "rc"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 axum-codec = { path = "../..", features = ["full-codecs", "macros", "validator"] }
-bitcode = "0.6"
 bincode = "2.0.0-rc.3"
 validator = { version = "0.18.1", features = ["derive"] }
 
