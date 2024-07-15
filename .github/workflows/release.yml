@@ -13,24 +13,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Get the version
-        id: get_version
+      - name: check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+      - name: get version
+        id: version
         run: echo "version=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
       - name: Build changelog
-        id: github_release
+        id: release
         uses: mikepenz/release-changelog-builder-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           configuration: .release.json
           commitMode: true
-      - name: Create release
-        id: create_release
+      - name: create release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          name: ${{ steps.get_version.outputs.version }} 🎉
-          body: ${{ steps.github_release.outputs.changelog }}
+          name: ${{ steps.version.outputs.version }} 🎉
+          body: ${{ steps.release.outputs.changelog }}
 

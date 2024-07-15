@@ -25,14 +25,22 @@ jobs:
           toolchain: nightly
           components: rustfmt, clippy
       - name: setup cache
+        id: cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-rustc-${{ steps.toolchain.outputs.cachekey }}
+
+      - name: install cargo hack
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: cargo install cargo-hack --locked
+
+      - name: cargo hack
+        run: cargo hack check --feature-powerset --no-dev-deps
       - name: cargo test
-        run: cargo test --lib --bins --tests
+        run: cargo test
       - name: cargo fmt
         run: cargo fmt --all -- --check
       - name: cargo clippy
