@@ -12,15 +12,13 @@ pub mod rejection;
 pub mod response;
 pub mod routing;
 
-pub use {
-	content::{Accept, ContentType},
-	decode::CodecDecode,
-	encode::CodecEncode,
-	extract::*,
-	handler::CodecHandler,
-	rejection::CodecRejection,
-	response::IntoCodecResponse,
-};
+pub use content::{Accept, ContentType};
+pub use decode::CodecDecode;
+pub use encode::CodecEncode;
+pub use extract::*;
+pub use handler::CodecHandler;
+pub use rejection::CodecRejection;
+pub use response::IntoCodecResponse;
 
 #[doc(hidden)]
 pub mod __private {
@@ -37,6 +35,5 @@ pub mod __private {
 }
 
 pub use axum_codec_macros as macros;
-
 #[cfg(feature = "macros")]
 pub use macros::apply;

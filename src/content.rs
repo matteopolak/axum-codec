@@ -35,7 +35,10 @@ pub enum ContentType {
 	feature = "toml"
 )))]
 const _: () = {
-	compile_error!("At least one of the following features must be enabled: `json`, `msgpack`, `bincode`, `bitcode`, `cbor`, `yaml`, `toml`.");
+	compile_error!(
+		"At least one of the following features must be enabled: `json`, `msgpack`, `bincode`, \
+		 `bitcode`, `cbor`, `yaml`, `toml`."
+	);
 
 	impl Default for ContentType {
 		fn default() -> Self {
@@ -232,16 +235,16 @@ impl<S> FromRequestParts<S> for ContentType {
 /// #
 /// #[axum_codec::apply(encode)]
 /// struct User {
-///   name: String,
-///   age: u8,
+/// 	name: String,
+/// 	age: u8,
 /// }
 ///
 /// fn get_user(accept: Accept) -> impl IntoResponse {
-///   Codec(User {
-///     name: "Alice".into(),
-///     age: 42,
-///   })
-///   .to_response(accept)
+/// 	Codec(User {
+/// 		name: "Alice".into(),
+/// 		age: 42,
+/// 	})
+/// 	.to_response(accept)
 /// }
 /// #
 /// # fn main() {}

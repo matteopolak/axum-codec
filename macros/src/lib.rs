@@ -25,7 +25,6 @@ pub fn apply(
 mod apply {
 	use proc_macro2::TokenStream;
 	use quote::{quote, ToTokens};
-
 	use syn::{
 		parse::{Parse, ParseStream},
 		punctuated::Punctuated,
@@ -75,9 +74,7 @@ mod apply {
 							Some(other) => {
 								return Err(syn::Error::new(
 									path.span(),
-									format!(
-										"unknown option `{other}`, expected `encode` or `decode`"
-									),
+									format!("unknown option `{other}`, expected `encode` or `decode`"),
 								))
 							}
 							None => {
@@ -90,10 +87,7 @@ mod apply {
 					}
 					Meta::NameValue(name_value) => {
 						if !name_value.path.is_ident("crate") {
-							return Err(syn::Error::new(
-								name_value.path.span(),
-								"expected `crate`",
-							));
+							return Err(syn::Error::new(name_value.path.span(), "expected `crate`"));
 						}
 
 						let path = match name_value.value {
@@ -109,8 +103,7 @@ mod apply {
 							}
 						};
 
-						let mut path =
-							syn::parse_str::<Path>(&path.value()).expect("failed to parse path");
+						let mut path = syn::parse_str::<Path>(&path.value()).expect("failed to parse path");
 
 						path.leading_colon = if path.is_ident("crate") {
 							None

@@ -28,7 +28,8 @@ pub trait CodecHandler<T, I: Input, D, S>: Clone + Send + 'static {
 	fn call(self, req: Request, state: S) -> Self::Future;
 }
 
-/// Transforms a function (that returns [`IntoCodecResponse`]) into a regular handler.
+/// Transforms a function (that returns [`IntoCodecResponse`]) into a regular
+/// handler.
 pub struct CodecHandlerFn<H, I, D> {
 	pub(crate) f: H,
 	pub(crate) _marker: std::marker::PhantomData<(I, D)>,

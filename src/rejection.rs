@@ -119,7 +119,8 @@ impl CodecRejection {
 		}
 	}
 
-	/// Consumes the rejection and returns a pretty [`Message`] representing the error.
+	/// Consumes the rejection and returns a pretty [`Message`] representing the
+	/// error.
 	///
 	/// Useful for sending a detailed error message to the client, but not so much
 	/// for local debugging.

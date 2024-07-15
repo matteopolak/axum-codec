@@ -7,9 +7,13 @@ use crate::{
 	CodecHandler, IntoCodecResponse,
 };
 
-/// A light wrapper around axum's [`MethodRouter`](axum::routing::MethodRouter) (or [`ApiMethodRouter`](aide::axum::routing::ApiMethodRouter) if the `aide` feature is enabled).
+/// A light wrapper around axum's [`MethodRouter`](axum::routing::MethodRouter)
+/// (or [`ApiMethodRouter`](aide::axum::routing::ApiMethodRouter) if the `aide`
+/// feature is enabled).
 ///
-/// However, responses are expected to be [`IntoCodecResponse`] (instead of [`IntoResponse`](axum::response::IntoResponse)), as they are automatically converted to the appropriate response type when appropriate.
+/// However, responses are expected to be [`IntoCodecResponse`] (instead of
+/// [`IntoResponse`](axum::response::IntoResponse)), as they are automatically
+/// converted to the appropriate response type when appropriate.
 pub struct MethodRouter<S = (), E = Infallible> {
 	#[cfg(not(feature = "aide"))]
 	inner: routing::MethodRouter<S, E>,
@@ -127,12 +131,19 @@ where
 	S: Clone + Send + Sync + 'static,
 {
 	method_router_chain_method!(delete, delete_with);
+
 	method_router_chain_method!(get, get_with);
+
 	method_router_chain_method!(head, head_with);
+
 	method_router_chain_method!(options, options_with);
+
 	method_router_chain_method!(patch, patch_with);
+
 	method_router_chain_method!(post, post_with);
+
 	method_router_chain_method!(put, put_with);
+
 	method_router_chain_method!(trace, trace_with);
 }
 

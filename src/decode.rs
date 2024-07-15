@@ -25,8 +25,8 @@ where
 	}
 
 	/// Attempts to deserialize the given bytes as [MessagePack](https://msgpack.org).
-	/// Does not perform any validation if the `validator` feature is enabled. For validation,
-	/// use [`Self::from_bytes`].
+	/// Does not perform any validation if the `validator` feature is enabled. For
+	/// validation, use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -38,8 +38,8 @@ where
 	}
 
 	/// Attemps to deserialize the given bytes as [CBOR](https://cbor.io).
-	/// Does not perform any validation if the `validator` feature is enabled. For validation,
-	/// use [`Self::from_bytes`].
+	/// Does not perform any validation if the `validator` feature is enabled. For
+	/// validation, use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -51,8 +51,8 @@ where
 	}
 
 	/// Attempts to deserialize the given text as [YAML](https://yaml.org).
-	/// Does not perform any validation if the `validator` feature is enabled. For validation,
-	/// use [`Self::from_bytes`].
+	/// Does not perform any validation if the `validator` feature is enabled. For
+	/// validation, use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -64,8 +64,8 @@ where
 	}
 
 	/// Attempts to deserialize the given text as [TOML](https://toml.io).
-	/// Does not perform any validation if the `validator` feature is enabled. For validation,
-	/// use [`Self::from_bytes`].
+	/// Does not perform any validation if the `validator` feature is enabled. For
+	/// validation, use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -79,8 +79,8 @@ where
 
 impl<T> Codec<T> {
 	/// Attempts to deserialize the given bytes as [Bincode](https://github.com/bincode-org/bincode).
-	/// Does not perform any validation if the `validator` feature is enabled. For validation,
-	/// use [`Self::from_bytes`].
+	/// Does not perform any validation if the `validator` feature is enabled. For
+	/// validation, use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///
@@ -95,8 +95,8 @@ impl<T> Codec<T> {
 	}
 
 	/// Attempts to deserialize the given bytes as [Bitcode](https://github.com/SoftbearStudios/bitcode).
-	/// Does not perform any validation if the `validator` feature is enabled. For validation,
-	/// use [`Self::from_bytes`].
+	/// Does not perform any validation if the `validator` feature is enabled. For
+	/// validation, use [`Self::from_bytes`].
 	///
 	/// # Errors
 	///

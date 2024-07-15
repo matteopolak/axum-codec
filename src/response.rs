@@ -36,14 +36,14 @@ where
 mod axum_impls {
 	use std::borrow::Cow;
 
-	use super::{ContentType, IntoCodecResponse};
-
 	use axum::{
 		body::Bytes,
 		http::StatusCode,
 		response::{IntoResponse, Response},
 		BoxError,
 	};
+
+	use super::{ContentType, IntoCodecResponse};
 
 	impl<T, E> IntoCodecResponse for Result<T, E>
 	where

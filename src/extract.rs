@@ -15,11 +15,13 @@ use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoC
 /// The serialized data is not specified. Upon deserialization, the request's
 /// `Content-Type` header is used to determine the format of the data.
 ///
-/// By default, only JSON is supported. To enable other formats, use the corresponding feature flags.
+/// By default, only JSON is supported. To enable other formats, use the
+/// corresponding feature flags.
 ///
-/// Note that [`IntoResponse`] is not implemented for this type, as the headers are not available
-/// when serializing the data. Instead, use [`Codec::to_response`] to create a response with the
-/// appropriate `Content-Type` header extracted from the request with [`Accept`].
+/// Note that [`IntoResponse`] is not implemented for this type, as the headers
+/// are not available when serializing the data. Instead, use
+/// [`Codec::to_response`] to create a response with the appropriate
+/// `Content-Type` header extracted from the request with [`Accept`].
 ///
 /// # Examples
 ///
@@ -31,7 +33,7 @@ use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoC
 /// # fn main() {
 /// #[axum_codec::apply(decode)]
 /// struct Greeting {
-///   hello: String
+/// 	hello: String,
 /// }
 ///
 /// let bytes = b"{\"hello\": \"world\"}";
@@ -55,7 +57,8 @@ where
 
 	/// Converts the inner value into a response with the given content type.
 	///
-	/// If serialization fails, the rejection is converted into a response. See [`encode::Error`](crate::encode::Error) for possible errors.
+	/// If serialization fails, the rejection is converted into a response. See
+	/// [`encode::Error`](crate::encode::Error) for possible errors.
 	pub fn to_response<C: Into<ContentType>>(&self, content_type: C) -> Response {
 		let content_type = content_type.into();
 		let bytes = match self.to_bytes(content_type) {
@@ -113,8 +116,8 @@ where
 		let bytes = Bytes::from_request(req, state)
 			.await
 			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
-		let data = Codec::from_bytes(&bytes, content_type)
-			.map_err(|e| e.into_codec_response(accept.into()))?;
+		let data =
+			Codec::from_bytes(&bytes, content_type).map_err(|e| e.into_codec_response(accept.into()))?;
 
 		Ok(data)
 	}
@@ -185,12 +188,9 @@ mod test {
 
 		let Codec(data) = Codec::<Data>::from_bytes(bytes, ContentType::Json).unwrap();
 
-		assert_eq!(
-			data,
-			Data {
-				hello: "world".into()
-			}
-		);
+		assert_eq!(data, Data {
+			hello: "world".into()
+		});
 	}
 
 	#[test]
@@ -199,11 +199,8 @@ mod test {
 
 		let Codec(data) = Codec::<Data>::from_bytes(bytes, ContentType::MsgPack).unwrap();
 
-		assert_eq!(
-			data,
-			Data {
-				hello: "world".into()
-			}
-		);
+		assert_eq!(data, Data {
+			hello: "world".into()
+		});
 	}
 }
