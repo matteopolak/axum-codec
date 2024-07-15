@@ -33,7 +33,7 @@ use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoC
 /// # fn main() {
 /// #[axum_codec::apply(decode)]
 /// struct Greeting {
-/// 	hello: String,
+///   hello: String,
 /// }
 ///
 /// let bytes = b"{\"hello\": \"world\"}";

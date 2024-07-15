@@ -235,16 +235,16 @@ impl<S> FromRequestParts<S> for ContentType {
 /// #
 /// #[axum_codec::apply(encode)]
 /// struct User {
-/// 	name: String,
-/// 	age: u8,
+///   name: String,
+///   age: u8,
 /// }
 ///
 /// fn get_user(accept: Accept) -> impl IntoResponse {
-/// 	Codec(User {
-/// 		name: "Alice".into(),
-/// 		age: 42,
-/// 	})
-/// 	.to_response(accept)
+///   Codec(User {
+///     name: "Alice".into(),
+///     age: 42,
+///   })
+///   .to_response(accept)
 /// }
 /// #
 /// # fn main() {}
