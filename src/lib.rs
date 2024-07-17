@@ -1,6 +1,18 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
+#![cfg_attr(
+	not(any(
+		feature = "json",
+		feature = "msgpack",
+		feature = "bincode",
+		feature = "bitcode",
+		feature = "cbor",
+		feature = "yaml",
+		feature = "toml"
+	)),
+	allow(unreachable_code, unused_variables)
+)]
 #![doc = include_str!("../README.md")]
 
 mod content;

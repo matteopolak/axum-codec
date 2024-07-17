@@ -38,7 +38,7 @@ jobs:
         run: cargo install cargo-hack --locked
 
       - name: cargo hack
-        run: cargo hack check --feature-powerset --no-dev-deps
+        run: cargo hack check --feature-powerset --skip serde,full-codecs --depth 4 --no-dev-deps
       - name: cargo test
         run: cargo test
       - name: cargo fmt

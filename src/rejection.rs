@@ -1,4 +1,8 @@
-use axum::{extract::rejection::BytesRejection, http::StatusCode, response::Response};
+use axum::{
+	extract::rejection::BytesRejection,
+	http::StatusCode,
+	response::{IntoResponse, Response},
+};
 
 use crate::{ContentType, IntoCodecResponse};
 

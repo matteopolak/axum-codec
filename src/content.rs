@@ -159,7 +159,7 @@ impl ContentType {
 	/// ```
 	#[must_use]
 	pub fn as_str(&self) -> &'static str {
-		match self {
+		match *self {
 			#[cfg(feature = "json")]
 			Self::Json => "application/json",
 			#[cfg(feature = "msgpack")]
