@@ -110,7 +110,7 @@ pub struct Message {
 	pub content: String,
 }
 
-#[cfg(feature = "aide")]
+#[cfg(all(feature = "aide", feature = "pretty-errors"))]
 impl aide::OperationOutput for Message {
 	type Inner = Self;
 
