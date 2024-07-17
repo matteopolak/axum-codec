@@ -188,12 +188,9 @@ mod test {
 
 		let Codec(data) = Codec::<Data>::from_bytes(bytes, ContentType::Json).unwrap();
 
-		assert_eq!(
-			data,
-			Data {
-				hello: "world".into()
-			}
-		);
+		assert_eq!(data, Data {
+			hello: "world".into()
+		});
 	}
 
 	#[test]
@@ -202,11 +199,8 @@ mod test {
 
 		let Codec(data) = Codec::<Data>::from_bytes(bytes, ContentType::MsgPack).unwrap();
 
-		assert_eq!(
-			data,
-			Data {
-				hello: "world".into()
-			}
-		);
+		assert_eq!(data, Data {
+			hello: "world".into()
+		});
 	}
 }
