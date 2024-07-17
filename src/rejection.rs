@@ -1,8 +1,4 @@
-use axum::{
-	extract::rejection::BytesRejection,
-	http::StatusCode,
-	response::{IntoResponse, Response},
-};
+use axum::{extract::rejection::BytesRejection, http::StatusCode, response::Response};
 
 use crate::{ContentType, IntoCodecResponse};
 
@@ -47,6 +43,8 @@ pub enum CodecRejection {
 #[cfg(not(feature = "pretty-errors"))]
 impl IntoCodecResponse for CodecRejection {
 	fn into_codec_response(self, _content_type: ContentType) -> Response {
+		use axum::response::IntoResponse;
+
 		let mut response = self.to_string().into_response();
 
 		*response.status_mut() = self.status_code();
@@ -54,7 +52,7 @@ impl IntoCodecResponse for CodecRejection {
 	}
 }
 
-#[cfg(feature = "aide")]
+#[cfg(all(feature = "aide", feature = "pretty-errors"))]
 impl aide::OperationOutput for CodecRejection {
 	type Inner = Message;
 
@@ -70,6 +68,25 @@ impl aide::OperationOutput for CodecRejection {
 		operation: &mut aide::openapi::Operation,
 	) -> Vec<(Option<u16>, aide::openapi::Response)> {
 		axum::Json::<Message>::inferred_responses(ctx, operation)
+	}
+}
+
+#[cfg(all(feature = "aide", not(feature = "pretty-errors")))]
+impl aide::OperationOutput for CodecRejection {
+	type Inner = String;
+
+	fn operation_response(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Option<aide::openapi::Response> {
+		axum::Json::<String>::operation_response(ctx, operation)
+	}
+
+	fn inferred_responses(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Vec<(Option<u16>, aide::openapi::Response)> {
+		axum::Json::<String>::inferred_responses(ctx, operation)
 	}
 }
 
