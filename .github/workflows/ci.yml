@@ -38,7 +38,7 @@ jobs:
         run: cargo install cargo-hack --locked
 
       - name: cargo hack
-        run: cargo hack check --feature-powerset --skip serde,macros,full-codecs,default --no-dev-deps --at-least-one-of bincode,bitcode,cbor,json,msgpack,toml,yaml
+        run: cargo hack check --feature-powerset --skip serde,macros,full-codecs,default --no-dev-deps --at-least-one-of bincode,bitcode,cbor,json,msgpack,toml,yaml --group-features cbor,json,msgpack,toml,yaml
       - name: cargo test
         run: cargo test
       - name: cargo fmt
