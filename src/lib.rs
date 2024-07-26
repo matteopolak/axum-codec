@@ -49,3 +49,95 @@ pub mod __private {
 pub use axum_codec_macros as macros;
 #[cfg(feature = "macros")]
 pub use macros::apply;
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	#[apply(decode, encode)]
+	#[derive(Debug, PartialEq)]
+	struct Data {
+		string: String,
+		integer: i32,
+		array: Vec<i32>,
+		boolean: bool,
+	}
+
+	fn data() -> Data {
+		Data {
+			string: "hello".into(),
+			integer: 42,
+			array: vec![1, 2, 3],
+			boolean: true,
+		}
+	}
+
+	#[test]
+	fn test_msgpack_roundtrip() {
+		let data = data();
+		let encoded = Codec(&data).to_msgpack().unwrap();
+
+		let Codec(decoded) = Codec::<Data>::from_msgpack(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	fn test_json_roundtrip() {
+		let data = data();
+		let encoded = Codec(&data).to_json().unwrap();
+
+		let Codec(decoded) = Codec::<Data>::from_json(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	fn test_cbor_roundtrip() {
+		let data = data();
+		let encoded = Codec(&data).to_cbor().unwrap();
+
+		let Codec(decoded) = Codec::<Data>::from_cbor(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	fn test_yaml_roundtrip() {
+		let data = data();
+		let encoded = Codec(&data).to_yaml().unwrap();
+
+		let Codec(decoded) = Codec::<Data>::from_yaml(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	fn test_toml_roundtrip() {
+		let data = data();
+		let encoded = Codec(&data).to_toml().unwrap();
+
+		let Codec(decoded) = Codec::<Data>::from_toml(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	fn test_bincode_roundtrip() {
+		let data = data();
+		let encoded = Codec(&data).to_bincode().unwrap();
+
+		let Codec(decoded) = Codec::<Data>::from_bincode(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	fn test_bitcode_roundtrip() {
+		let encoded = Codec(data()).to_bitcode();
+
+		let Codec(decoded) = Codec::<Data>::from_bitcode(&encoded).unwrap();
+
+		assert_eq!(decoded, data());
+	}
+}
