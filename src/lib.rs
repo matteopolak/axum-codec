@@ -27,7 +27,7 @@ pub mod routing;
 pub use content::{Accept, ContentType};
 pub use decode::CodecDecode;
 pub use encode::CodecEncode;
-pub use extract::*;
+pub use extract::Codec;
 pub use handler::CodecHandler;
 pub use rejection::CodecRejection;
 pub use response::IntoCodecResponse;
