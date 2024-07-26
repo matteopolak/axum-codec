@@ -34,7 +34,9 @@ where
 	#[cfg(feature = "msgpack")]
 	#[inline]
 	pub fn from_msgpack(bytes: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
-		rmp_serde::from_slice(bytes).map(Self)
+		let mut deserializer = rmp_serde::Deserializer::new(bytes).with_human_readable();
+
+		serde::Deserialize::deserialize(&mut deserializer).map(Self)
 	}
 
 	/// Attemps to deserialize the given bytes as [CBOR](https://cbor.io).
