@@ -18,6 +18,7 @@ aide = { version = "0.13", optional = true, default-features = false, features =
 axum = { version = "0.7", default-features = false }
 axum-codec-macros = { path = "macros", version = "0.0.8" }
 bincode = { version = "2.0.0-rc.3", default-features = false, features = ["std"], optional = true }
+# 0.6.3 added the #[bitcode(crate = "...")] option
 bitcode = { version = "0.6.3", default-features = false, features = ["std"], optional = true }
 ciborium = { version = "0.2", optional = true }
 mime = "0.3"

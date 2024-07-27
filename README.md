@@ -40,12 +40,12 @@ use axum_codec::{
 //   serde::Serialize, serde::Deserialize,
 //   bincode::Encode, bincode::Decode,
 //   bitcode::Encode, bitcode::Decode,
+//   validator::Validate,
 // )]
 // #[serde(crate = "...")]
 // #[bincode(crate = "...")]
-//
-// NOTE: `validator` does not support `#[validator(crate = "...)]` yet,
-// so the dependency must be specified in your `Cargo.toml` if enabled (and using this macro).
+// #[bitcode(crate = "...")]
+// #[validator(crate = "...")]
 #[axum_codec::apply(encode, decode)]
 struct User {
   name: String,
