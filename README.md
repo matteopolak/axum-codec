@@ -1,7 +1,7 @@
 # Axum Codec
 
-[![https://img.shields.io/crates/v/axum-codec](https://img.shields.io/crates/v/axum-codec)](https://crates.io/crates/axum-codec)
-[![https://img.shields.io/docsrs/axum-codec](https://img.shields.io/docsrs/axum-codec)](https://docs.rs/axum-codec/latest/axum_codec/)
+[![<https://img.shields.io/crates/v/axum-codec>](https://img.shields.io/crates/v/axum-codec)](https://crates.io/crates/axum-codec)
+[![<https://img.shields.io/docsrs/axum-codec>](https://img.shields.io/docsrs/axum-codec)](https://docs.rs/axum-codec/latest/axum_codec/)
 [![ci status](https://github.com/matteopolak/axum-codec/workflows/ci/badge.svg)](https://github.com/matteopolak/axum-codec/actions)
 
 A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
@@ -23,6 +23,7 @@ A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
 - [ ] Add benchmarks?
 
 Here's a quick example that can do the following:
+
 - Decode a `User` from the request body in any of the supported formats.
 - Encode a `Greeting` to the response body in any of the supported formats.
 
@@ -98,7 +99,7 @@ async fn main() {
 # Feature flags
 
 - `macros`: Enables the `axum_codec::apply` attribute macro.
-- `json`*: Enables [`JSON`](https://github.com/serde-rs/json) support.
+- `json`\*: Enables [`JSON`](https://github.com/serde-rs/json) support.
 - `msgpack`: Enables [`MessagePack`](https://github.com/3Hren/msgpack-rust) support.
 - `bincode`: Enables [`Bincode`](https://github.com/bincode-org/bincode) support.
 - `bitcode`: Enables [`Bitcode`](https://github.com/SoftbearStudios/bitcode) support.
@@ -110,7 +111,11 @@ async fn main() {
 
 * Enabled by default.
 
+## A note about `#[axum::debug_handler]`
+
+Since `axum-codec` uses its own `IntoCodecResponse` trait for encoding responses, it is not compatible with `#[axum::debug_handler]`. However, a new `#[axum_codec::debug_handler]` (and `#[axum_codec::debug_middleware]`) macro
+is provided as a drop-in replacement.
+
 ## License
 
 Dual-licensed under MIT or Apache License v2.0.
-

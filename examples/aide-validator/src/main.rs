@@ -14,6 +14,7 @@ struct User {
 	age: u8,
 }
 
+#[axum_codec::debug_handler]
 async fn me() -> impl IntoCodecResponse {
 	Codec(User {
 		name: "Alice".into(),

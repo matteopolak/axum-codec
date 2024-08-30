@@ -20,7 +20,7 @@ impl<T> Input for T where T: aide::OperationInput {}
 
 #[diagnostic::on_unimplemented(
 	note = "Consider wrapping the return value in `Codec` if appropriate",
-	note = "Consider using `#[axum::debug_handler]` to improve the error message"
+	note = "Consider using `#[axum_codec::debug_handler]` to improve the error message"
 )]
 pub trait CodecHandler<T, I: Input, D, S>: Clone + Send + 'static {
 	type Future: Future<Output = Response> + Send;
