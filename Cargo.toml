@@ -16,7 +16,7 @@ members = ["macros", ".", "examples/*"]
 [dependencies]
 aide = { version = "0.13", optional = true, default-features = false, features = ["axum"] }
 axum = { version = "0.7", default-features = false }
-axum-codec-macros = { path = "macros", version = "0.0.9" }
+axum-codec-macros = { path = "macros", version = "0.0.10", default-features = false }
 bincode = { version = "2.0.0-rc.3", default-features = false, features = ["std"], optional = true }
 # 0.6.3 added the #[bitcode(crate = "...")] option
 bitcode = { version = "0.6.3", default-features = false, features = ["std"], optional = true }
@@ -43,7 +43,7 @@ default = ["json", "macros", "pretty-errors"]
 
 # Enables all codecs
 full-codecs = ["bincode", "bitcode", "cbor", "json", "msgpack", "toml", "yaml"]
-macros = ["schemars?/derive", "bincode?/derive", "bitcode?/derive", "serde?/derive", "validator?/derive"]
+macros = ["schemars?/derive", "bincode?/derive", "bitcode?/derive", "serde?/derive", "validator?/derive", "axum-codec-macros/debug"]
 
 # Enables support for {get,put,..}_with and relevant chaning methods
 # to add documentation to routes

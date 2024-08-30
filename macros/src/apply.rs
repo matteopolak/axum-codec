@@ -1,4 +1,11 @@
 use proc_macro2::TokenStream;
+#[cfg(any(
+	feature = "bincode",
+	feature = "bitcode",
+	feature = "serde",
+	feature = "aide",
+	feature = "validator"
+))]
 use quote::{quote, ToTokens};
 use syn::{
 	parse::{Parse, ParseStream},

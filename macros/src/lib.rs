@@ -1,5 +1,15 @@
+#![cfg_attr(
+	not(any(
+		feature = "bincode",
+		feature = "bitcode",
+		feature = "serde",
+		feature = "aide",
+		feature = "validator"
+	)),
+	allow(unused_variables, dead_code)
+)]
+
 use proc_macro::TokenStream;
-use quote::{quote, ToTokens};
 use syn::parse::Parse;
 
 mod apply;
@@ -50,7 +60,7 @@ where
 	F: FnOnce(A, I) -> K,
 	A: Parse,
 	I: Parse,
-	K: ToTokens,
+	K: quote::ToTokens,
 {
 	let expand_result = (|| {
 		let attr = syn::parse(attr)?;
@@ -62,11 +72,11 @@ where
 
 fn expand<T>(result: syn::Result<T>) -> TokenStream
 where
-	T: ToTokens,
+	T: quote::ToTokens,
 {
 	match result {
 		Ok(tokens) => {
-			let tokens = (quote! { #tokens }).into();
+			let tokens = (quote::quote! { #tokens }).into();
 			if std::env::var_os("AXUM_MACROS_DEBUG").is_some() {
 				eprintln!("{tokens}");
 			}
