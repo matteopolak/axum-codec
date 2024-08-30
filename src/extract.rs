@@ -100,7 +100,7 @@ where
 
 	async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
 		let (mut parts, body) = req.into_parts();
-		let Ok(accept) = Accept::from_request_parts(&mut parts, state).await;
+		let accept = Accept::from_request_parts(&mut parts, state).await.unwrap();
 
 		let req = Request::from_parts(parts, body);
 

@@ -139,7 +139,9 @@ where
 		Box::pin(async move {
 			let (mut parts, ..) = req.into_parts();
 
-			let Ok(content_type) = Accept::from_request_parts(&mut parts, &state).await;
+			let content_type = Accept::from_request_parts(&mut parts, &state)
+				.await
+				.unwrap();
 
 			self().await.into_codec_response(content_type.into())
 		})
@@ -166,7 +168,7 @@ macro_rules! impl_handler {
 				Box::pin(async move {
 					let (mut parts, body) = req.into_parts();
 
-					let Ok(content_type) = Accept::from_request_parts(&mut parts, &state).await;
+					let content_type = Accept::from_request_parts(&mut parts, &state).await.unwrap();
 
 					$(
 						let $ty = match $ty::from_request_parts(&mut parts, &state).await {
