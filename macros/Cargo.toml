@@ -16,6 +16,9 @@ quote = "1"
 syn = { version = "2", optional = true }
 
 [features]
+default = ["debug"]
+
+debug = []
 bincode = ["dep:syn"]
 bitcode = ["dep:syn"]
 serde = ["dep:syn"]

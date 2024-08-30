@@ -1,12 +1,14 @@
+use proc_macro::TokenStream;
+use quote::{quote, ToTokens};
+use syn::parse::Parse;
+
+mod apply;
+mod attr_parsing;
+mod debug_handler;
+mod with_position;
+
 /// A utility macro for automatically deriving the correct traits
 /// depending on the enabled features.
-#[cfg(any(
-	feature = "bincode",
-	feature = "bitcode",
-	feature = "serde",
-	feature = "aide",
-	feature = "validator"
-))]
 #[proc_macro_attribute]
 pub fn apply(
 	attr: proc_macro::TokenStream,
@@ -15,227 +17,112 @@ pub fn apply(
 	apply::apply(attr, input)
 }
 
-#[cfg(any(
-	feature = "bincode",
-	feature = "bitcode",
-	feature = "serde",
-	feature = "aide",
-	feature = "validator"
-))]
-mod apply {
-	use proc_macro2::TokenStream;
-	use quote::{quote, ToTokens};
-	use syn::{
-		parse::{Parse, ParseStream},
-		punctuated::Punctuated,
-		spanned::Spanned,
-		Meta, Path, Token,
-	};
+/// Generates better error messages when applied to handler functions.
+///
+/// For more information, see [`axum::debug_handler`](https://docs.rs/axum/latest/axum/attr.debug_handler.html).
+#[proc_macro_attribute]
+pub fn debug_handler(_attr: TokenStream, input: TokenStream) -> TokenStream {
+	#[cfg(not(debug_assertions))]
+	return input;
 
-	struct Args {
-		encode: bool,
-		decode: bool,
-		crate_name: Path,
+	#[cfg(debug_assertions)]
+	return expand_attr_with(_attr, input, |attrs, item_fn| {
+		debug_handler::expand(attrs, item_fn, debug_handler::FunctionKind::Handler)
+	});
+}
+
+/// Generates better error messages when applied to middleware functions.
+///
+/// For more information, see [`axum::debug_middleware`](https://docs.rs/axum/latest/axum/attr.debug_middleware.html).
+#[proc_macro_attribute]
+pub fn debug_middleware(_attr: TokenStream, input: TokenStream) -> TokenStream {
+	#[cfg(not(debug_assertions))]
+	return input;
+
+	#[cfg(debug_assertions)]
+	return expand_attr_with(_attr, input, |attrs, item_fn| {
+		debug_handler::expand(attrs, item_fn, debug_handler::FunctionKind::Middleware)
+	});
+}
+
+fn expand_attr_with<F, A, I, K>(attr: TokenStream, input: TokenStream, f: F) -> TokenStream
+where
+	F: FnOnce(A, I) -> K,
+	A: Parse,
+	I: Parse,
+	K: ToTokens,
+{
+	let expand_result = (|| {
+		let attr = syn::parse(attr)?;
+		let input = syn::parse(input)?;
+		Ok(f(attr, input))
+	})();
+	expand(expand_result)
+}
+
+fn expand<T>(result: syn::Result<T>) -> TokenStream
+where
+	T: ToTokens,
+{
+	match result {
+		Ok(tokens) => {
+			let tokens = (quote! { #tokens }).into();
+			if std::env::var_os("AXUM_MACROS_DEBUG").is_some() {
+				eprintln!("{tokens}");
+			}
+			tokens
+		}
+		Err(err) => err.into_compile_error().into(),
 	}
+}
 
-	impl Parse for Args {
-		fn parse(input: ParseStream) -> syn::Result<Self> {
-			let options = Punctuated::<Meta, Token![,]>::parse_terminated(input)?;
-
-			let mut encode = false;
-			let mut decode = false;
-			let mut crate_name = syn::parse_str("axum_codec").expect("failed to parse crate name");
-
-			for meta in options {
-				match meta {
-					Meta::List(list) => {
-						return Err(syn::Error::new(
-							list.span(),
-							"expected `encode`, `decode`, or `crate`",
-						))
-					}
-					Meta::Path(path) => {
-						let ident = path.get_ident().map(|ident| ident.to_string());
-						match ident.as_deref() {
-							Some("encode") if encode => {
-								return Err(syn::Error::new(
-									path.span(),
-									"option `encode` is already enabled",
-								))
-							}
-							Some("decode") if decode => {
-								return Err(syn::Error::new(
-									path.span(),
-									"option `decode` is already enabled",
-								))
-							}
-							Some("encode") => encode = true,
-							Some("decode") => decode = true,
-							Some(other) => {
-								return Err(syn::Error::new(
-									path.span(),
-									format!("unknown option `{other}`, expected `encode` or `decode`"),
-								))
-							}
-							None => {
-								return Err(syn::Error::new(
-									path.span(),
-									"expected `encode` or `decode`",
-								))
-							}
-						}
-					}
-					Meta::NameValue(name_value) => {
-						if !name_value.path.is_ident("crate") {
-							return Err(syn::Error::new(name_value.path.span(), "expected `crate`"));
-						}
-
-						let path = match name_value.value {
-							syn::Expr::Lit(ref lit) => match &lit.lit {
-								syn::Lit::Str(path) => path,
-								_ => return Err(syn::Error::new(lit.span(), "expected a string")),
-							},
-							_ => {
-								return Err(syn::Error::new(
-									name_value.value.span(),
-									"expected a literal string",
-								))
-							}
-						};
-
-						let mut path = syn::parse_str::<Path>(&path.value()).expect("failed to parse path");
-
-						path.leading_colon = if path.is_ident("crate") {
-							None
-						} else {
-							Some(Token![::](name_value.value.span()))
-						};
-
-						crate_name = path;
-					}
+fn infer_state_types<'a, I>(types: I) -> impl Iterator<Item = syn::Type> + 'a
+where
+	I: Iterator<Item = &'a syn::Type> + 'a,
+{
+	types
+		.filter_map(|ty| {
+			if let syn::Type::Path(path) = ty {
+				Some(&path.path)
+			} else {
+				None
+			}
+		})
+		.filter_map(|path| {
+			if let Some(last_segment) = path.segments.last() {
+				if last_segment.ident != "State" {
+					return None;
 				}
+
+				match &last_segment.arguments {
+					syn::PathArguments::AngleBracketed(args) if args.args.len() == 1 => {
+						Some(args.args.first().unwrap())
+					}
+					_ => None,
+				}
+			} else {
+				None
 			}
-
-			if !encode && !decode {
-				return Err(syn::Error::new(
-					input.span(),
-					"at least one of `encode` or `decode` must be enabled",
-				));
+		})
+		.filter_map(|generic_arg| {
+			if let syn::GenericArgument::Type(ty) = generic_arg {
+				Some(ty)
+			} else {
+				None
 			}
-
-			Ok(Self {
-				encode,
-				decode,
-				crate_name,
-			})
-		}
-	}
-
-	pub fn apply(
-		attr: proc_macro::TokenStream,
-		input: proc_macro::TokenStream,
-	) -> proc_macro::TokenStream {
-		let args = syn::parse_macro_input!(attr as Args);
-
-		let crate_name = &args.crate_name;
-		let mut tokens = TokenStream::default();
-
-		#[cfg(feature = "serde")]
-		{
-			if args.encode {
-				tokens.extend(quote! {
-					#[derive(#crate_name::__private::serde::Serialize)]
-				});
-			}
-
-			if args.decode {
-				tokens.extend(quote! {
-					#[derive(#crate_name::__private::serde::Deserialize)]
-				});
-			}
-
-			let crate_ = format!("{}::__private::serde", crate_name.to_token_stream());
-
-			tokens.extend(quote! {
-				#[serde(crate = #crate_)]
-			});
-		}
-
-		#[cfg(feature = "bincode")]
-		{
-			if args.encode {
-				tokens.extend(quote! {
-					#[derive(#crate_name::__private::bincode::Encode)]
-				});
-			}
-
-			if args.decode {
-				tokens.extend(quote! {
-					#[derive(#crate_name::__private::bincode::Decode)]
-				});
-			}
-
-			let crate_ = format!("{}::__private::bincode", crate_name.to_token_stream());
-
-			tokens.extend(quote! {
-				#[bincode(crate = #crate_)]
-			});
-		}
-
-		#[cfg(feature = "bitcode")]
-		{
-			if args.encode {
-				tokens.extend(quote! {
-					#[derive(#crate_name::__private::bitcode::Encode)]
-				});
-			}
-
-			if args.decode {
-				tokens.extend(quote! {
-					#[derive(#crate_name::__private::bitcode::Decode)]
-				});
-			}
-
-			let crate_ = format!("{}::__private::bitcode", crate_name.to_token_stream());
-
-			tokens.extend(quote! {
-				#[bitcode(crate = #crate_)]
-			});
-		}
-
-		#[cfg(feature = "aide")]
-		{
-			let crate_ = format!("{}::__private::schemars", crate_name.to_token_stream());
-
-			tokens.extend(quote! {
-				#[derive(#crate_name::__private::schemars::JsonSchema)]
-				#[schemars(crate = #crate_)]
-			});
-		}
-
-		// TODO: Implement #[validate(crate = "...")]
-		// For now, use the real crate name so the error is nicer.
-		#[cfg(feature = "validator")]
-		if args.decode {
-			tokens.extend(quote! {
-				#[derive(validator::Validate)]
-			});
-		}
-
-		tokens.extend(TokenStream::from(input));
-		tokens.into()
-	}
+		})
+		.cloned()
 }
 
 #[doc(hidden)]
 #[proc_macro]
-pub fn __private_decode_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn __private_decode_trait(input: TokenStream) -> TokenStream {
 	__private::decode_trait(input.into()).into()
 }
 
 #[doc(hidden)]
 #[proc_macro]
-pub fn __private_encode_trait(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn __private_encode_trait(input: TokenStream) -> TokenStream {
 	__private::encode_trait(input.into()).into()
 }
 

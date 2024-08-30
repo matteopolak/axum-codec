@@ -49,6 +49,10 @@ pub mod __private {
 pub use axum_codec_macros as macros;
 #[cfg(feature = "macros")]
 pub use macros::apply;
+#[cfg(feature = "macros")]
+pub use macros::debug_handler;
+#[cfg(feature = "macros")]
+pub use macros::debug_middleware;
 
 #[cfg(test)]
 mod test {
