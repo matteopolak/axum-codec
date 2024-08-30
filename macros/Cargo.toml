@@ -1,6 +1,6 @@
 [package]
 name = "axum-codec-macros"
-version = "0.0.8"
+version = "0.0.9"
 edition = "2021"
 description = "Procedural macros for axum-codec"
 license = "MIT OR Apache-2.0"
@@ -13,7 +13,7 @@ proc-macro = true
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = { version = "2", optional = true }
+syn = { version = "2", optional = true, features = ["extra-traits"] }
 
 [features]
 default = ["debug"]

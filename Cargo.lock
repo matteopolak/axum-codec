@@ -121,7 +121,7 @@ dependencies = [
 
 [[package]]
 name = "axum-codec"
-version = "0.0.12"
+version = "0.0.13"
 dependencies = [
  "aide",
  "axum",
@@ -144,7 +144,7 @@ dependencies = [
 
 [[package]]
 name = "axum-codec-macros"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "proc-macro2",
  "quote",
