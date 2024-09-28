@@ -109,7 +109,7 @@ async fn main() {
 - `aide`: Enables support for the [`Aide`](https://github.com/tamasfe/aide) documentation library.
 - `validator`: Enables support for the [`Validator`](https://github.com/Keats/validator) validation library, validating all input when extracted with `Codec<T>`.
 
-* Enabled by default.
+\* Enabled by default.
 
 ## A note about `#[axum::debug_handler]`
 
