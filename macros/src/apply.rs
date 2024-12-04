@@ -153,7 +153,7 @@ pub fn apply(
 
 		if args.decode {
 			tokens.extend(quote! {
-				#[derive(#crate_name::__private::bincode::Decode)]
+				#[derive(#crate_name::__private::bincode::BorrowDecode)]
 			});
 		}
 
@@ -199,8 +199,11 @@ pub fn apply(
 	// For now, use the real crate name so the error is nicer.
 	#[cfg(feature = "validator")]
 	if args.decode {
+		let crate_ = format!("{}::__private::validator", crate_name.to_token_stream());
+
 		tokens.extend(quote! {
-			#[derive(validator::Validate)]
+			#[derive(#crate_name::__private::validator::Validate)]
+			#[validate(crate = #crate_)]
 		});
 	}
 

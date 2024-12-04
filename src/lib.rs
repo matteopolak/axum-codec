@@ -67,11 +67,27 @@ mod test {
 		boolean: bool,
 	}
 
+	#[apply(decode, encode)]
+	#[derive(Debug, PartialEq)]
+	struct BorrowedData<'a> {
+		string: &'a str,
+		integer: i32,
+		boolean: bool,
+	}
+
 	fn data() -> Data {
 		Data {
 			string: "hello".into(),
 			integer: 42,
 			array: vec![1, 2, 3],
+			boolean: true,
+		}
+	}
+
+	fn borrowed_data<'a>() -> BorrowedData<'a> {
+		BorrowedData {
+			string: "hello",
+			integer: 42,
 			boolean: true,
 		}
 	}
@@ -87,6 +103,17 @@ mod test {
 	}
 
 	#[test]
+	#[should_panic(expected = "invalid type: string \\\"hello\\\", expected a borrowed string")]
+	fn test_borrowed_msgpack_roundtrip() {
+		let data = borrowed_data();
+		let encoded = Codec(&data).to_msgpack().unwrap();
+
+		let Codec(decoded) = Codec::<BorrowedData>::from_msgpack(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
 	fn test_json_roundtrip() {
 		let data = data();
 		let encoded = Codec(&data).to_json().unwrap();
@@ -97,11 +124,33 @@ mod test {
 	}
 
 	#[test]
+	fn test_borrowed_json_roundtrip() {
+		let data = borrowed_data();
+		let encoded = Codec(&data).to_json().unwrap();
+
+		let Codec(decoded) = Codec::<BorrowedData>::from_json(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	#[cfg(feature = "cbor")]
 	fn test_cbor_roundtrip() {
 		let data = data();
 		let encoded = Codec(&data).to_cbor().unwrap();
 
 		let Codec(decoded) = Codec::<Data>::from_cbor(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	#[cfg(feature = "cbor")]
+	fn test_borrowed_cbor_roundtrip() {
+		let data = borrowed_data();
+		let encoded = Codec(&data).to_cbor().unwrap();
+
+		let Codec(decoded) = Codec::<BorrowedData>::from_cbor(&encoded).unwrap();
 
 		assert_eq!(decoded, data);
 	}
@@ -117,11 +166,32 @@ mod test {
 	}
 
 	#[test]
+	fn test_borrowed_yaml_roundtrip() {
+		let data = borrowed_data();
+		let encoded = Codec(&data).to_yaml().unwrap();
+
+		let Codec(decoded) = Codec::<BorrowedData>::from_yaml(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
 	fn test_toml_roundtrip() {
 		let data = data();
 		let encoded = Codec(&data).to_toml().unwrap();
 
 		let Codec(decoded) = Codec::<Data>::from_toml(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	#[should_panic(expected = "invalid type: string \\\"hello\\\", expected a borrowed string")]
+	fn test_borrowed_toml_roundtrip() {
+		let data = borrowed_data();
+		let encoded = Codec(&data).to_toml().unwrap();
+
+		let Codec(decoded) = Codec::<BorrowedData>::from_toml(&encoded).unwrap();
 
 		assert_eq!(decoded, data);
 	}
@@ -137,11 +207,30 @@ mod test {
 	}
 
 	#[test]
+	fn test_borrowed_bincode_roundtrip() {
+		let data = borrowed_data();
+		let encoded = Codec(&data).to_bincode().unwrap();
+
+		let Codec(decoded) = Codec::<BorrowedData>::from_bincode(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
 	fn test_bitcode_roundtrip() {
 		let encoded = Codec(data()).to_bitcode();
 
 		let Codec(decoded) = Codec::<Data>::from_bitcode(&encoded).unwrap();
 
 		assert_eq!(decoded, data());
+	}
+
+	#[test]
+	fn test_borrowed_bitcode_roundtrip() {
+		let encoded = Codec(borrowed_data()).to_bitcode();
+
+		let Codec(decoded) = Codec::<BorrowedData>::from_bitcode(&encoded).unwrap();
+
+		assert_eq!(decoded, borrowed_data());
 	}
 }
