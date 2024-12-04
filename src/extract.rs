@@ -44,6 +44,7 @@ use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoC
 /// assert_eq!(data.hello, "world");
 /// # }
 /// ```
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Codec<T>(pub T);
 
 impl<T> Codec<T>
