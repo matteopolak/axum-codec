@@ -44,6 +44,7 @@ use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoC
 /// assert_eq!(data.hello, "world");
 /// # }
 /// ```
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Codec<T>(pub T);
 
 impl<T> Codec<T>
@@ -93,7 +94,7 @@ impl<T: fmt::Display> fmt::Display for Codec<T> {
 #[axum::async_trait]
 impl<T, S> FromRequest<S> for Codec<T>
 where
-	T: CodecDecode,
+	T: for<'de> CodecDecode<'de>,
 	S: Send + Sync + 'static,
 {
 	type Rejection = Response;

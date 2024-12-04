@@ -9,9 +9,9 @@ crate::macros::__private_decode_trait! {
 }
 
 #[cfg(feature = "serde")]
-impl<T> Codec<T>
+impl<'b, T> Codec<T>
 where
-	T: serde::de::DeserializeOwned,
+	T: serde::de::Deserialize<'b>,
 {
 	/// Attempts to deserialize the given bytes as [JSON](https://www.json.org).
 	///
@@ -20,7 +20,7 @@ where
 	/// See [`serde_json::from_slice`].
 	#[cfg(feature = "json")]
 	#[inline]
-	pub fn from_json(bytes: &[u8]) -> Result<Self, serde_json::Error> {
+	pub fn from_json(bytes: &'b [u8]) -> Result<Self, serde_json::Error> {
 		serde_json::from_slice(bytes).map(Self)
 	}
 
@@ -33,7 +33,7 @@ where
 	/// See [`rmp_serde::from_slice`].
 	#[cfg(feature = "msgpack")]
 	#[inline]
-	pub fn from_msgpack(bytes: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
+	pub fn from_msgpack(bytes: &'b [u8]) -> Result<Self, rmp_serde::decode::Error> {
 		let mut deserializer = rmp_serde::Deserializer::new(bytes).with_human_readable();
 
 		serde::Deserialize::deserialize(&mut deserializer).map(Self)
@@ -48,7 +48,7 @@ where
 	/// See [`ciborium::from_slice`].
 	#[cfg(feature = "cbor")]
 	#[inline]
-	pub fn from_cbor(bytes: &[u8]) -> Result<Self, ciborium::de::Error<std::io::Error>> {
+	pub fn from_cbor(bytes: &'b [u8]) -> Result<Self, ciborium::de::Error<std::io::Error>> {
 		ciborium::from_reader(bytes).map(Self)
 	}
 
@@ -61,7 +61,7 @@ where
 	/// See [`serde_yaml::from_slice`].
 	#[cfg(feature = "yaml")]
 	#[inline]
-	pub fn from_yaml(text: &str) -> Result<Self, serde_yaml::Error> {
+	pub fn from_yaml(text: &'b str) -> Result<Self, serde_yaml::Error> {
 		serde_yaml::from_str(text).map(Self)
 	}
 
@@ -74,12 +74,12 @@ where
 	/// See [`toml::from_str`].
 	#[cfg(feature = "toml")]
 	#[inline]
-	pub fn from_toml(text: &str) -> Result<Self, toml::de::Error> {
-		toml::from_str(text).map(Self)
+	pub fn from_toml(text: &'b str) -> Result<Self, toml::de::Error> {
+		T::deserialize(toml::Deserializer::new(text)).map(Self)
 	}
 }
 
-impl<T> Codec<T> {
+impl<'b, T> Codec<T> {
 	/// Attempts to deserialize the given bytes as [Bincode](https://github.com/bincode-org/bincode).
 	/// Does not perform any validation if the `validator` feature is enabled. For
 	/// validation, use [`Self::from_bytes`].
@@ -89,11 +89,11 @@ impl<T> Codec<T> {
 	/// See [`bincode::decode_from_slice`].
 	#[cfg(feature = "bincode")]
 	#[inline]
-	pub fn from_bincode(bytes: &[u8]) -> Result<Self, bincode::error::DecodeError>
+	pub fn from_bincode(bytes: &'b [u8]) -> Result<Self, bincode::error::DecodeError>
 	where
-		T: bincode::Decode,
+		T: bincode::BorrowDecode<'b>,
 	{
-		bincode::decode_from_slice(bytes, bincode::config::standard()).map(|t| Self(t.0))
+		bincode::borrow_decode_from_slice(bytes, bincode::config::standard()).map(|t| Self(t.0))
 	}
 
 	/// Attempts to deserialize the given bytes as [Bitcode](https://github.com/SoftbearStudios/bitcode).
@@ -105,9 +105,9 @@ impl<T> Codec<T> {
 	/// See [`bitcode::decode`].
 	#[cfg(feature = "bitcode")]
 	#[inline]
-	pub fn from_bitcode(bytes: &[u8]) -> Result<Self, bitcode::Error>
+	pub fn from_bitcode(bytes: &'b [u8]) -> Result<Self, bitcode::Error>
 	where
-		T: bitcode::DecodeOwned,
+		T: bitcode::Decode<'b>,
 	{
 		bitcode::decode(bytes).map(Self)
 	}
@@ -117,9 +117,9 @@ impl<T> Codec<T> {
 	/// # Errors
 	///
 	/// See [`CodecRejection`].
-	pub fn from_bytes(bytes: &[u8], content_type: ContentType) -> Result<Self, CodecRejection>
+	pub fn from_bytes(bytes: &'b [u8], content_type: ContentType) -> Result<Self, CodecRejection>
 	where
-		T: CodecDecode,
+		T: CodecDecode<'b>,
 	{
 		let codec = match content_type {
 			#[cfg(feature = "json")]

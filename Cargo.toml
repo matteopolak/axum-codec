@@ -29,7 +29,7 @@ serde_json = { version = "1", optional = true }
 serde_yaml = { version = "0.9", optional = true }
 thiserror = "1"
 toml = { version = "0.8", optional = true }
-validator = { version = "0.18", optional = true }
+validator = { version = "0.19", optional = true }
 
 [dev-dependencies]
 axum = "0.7"
@@ -42,7 +42,7 @@ bitcode = "0.6"
 default = ["json", "macros", "pretty-errors"]
 
 # Enables all codecs
-full-codecs = ["bincode", "bitcode", "cbor", "json", "msgpack", "toml", "yaml"]
+full-codecs = ["bincode", "bitcode", "json", "msgpack", "toml", "yaml"]
 macros = ["schemars?/derive", "bincode?/derive", "bitcode?/derive", "serde?/derive", "validator?/derive", "axum-codec-macros/debug"]
 
 # Enables support for {get,put,..}_with and relevant chaning methods
@@ -58,7 +58,7 @@ pretty-errors = ["macros"]
 
 bincode = ["dep:bincode", "axum-codec-macros/bincode"]
 bitcode = ["dep:bitcode", "axum-codec-macros/bitcode"]
-cbor = ["dep:ciborium", "serde"]
+# cbor = ["dep:ciborium", "serde"]
 json = ["dep:serde_json", "serde"]
 msgpack = ["dep:rmp-serde", "serde"]
 toml = ["dep:toml", "serde"]
@@ -66,4 +66,7 @@ yaml = ["dep:serde_yaml", "serde"]
 
 # Should not be manually enabled, but will not cause any issues if it is.
 serde = ["dep:serde", "axum-codec-macros/serde"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("cbor"))'] }
 

@@ -147,11 +147,11 @@ mod __private {
 
 		codec_trait.extend(quote! {
 			#input
-			pub trait CodecDecode
+			pub trait CodecDecode<'de>
 		});
 
 		codec_impl.extend(quote! {
-			impl<T> CodecDecode for T
+			impl<'de, T> CodecDecode<'de> for T
 		});
 
 		#[cfg(any(
@@ -180,7 +180,7 @@ mod __private {
 			}
 
 			constraints.extend(quote! {
-				serde::de::DeserializeOwned
+				serde::de::Deserialize<'de>
 			});
 		}
 
@@ -191,7 +191,7 @@ mod __private {
 			}
 
 			constraints.extend(quote! {
-				bincode::Decode
+				bincode::BorrowDecode<'de>
 			});
 		}
 
@@ -202,7 +202,7 @@ mod __private {
 			}
 
 			constraints.extend(quote! {
-				bitcode::DecodeOwned
+				bitcode::Decode<'de>
 			});
 		}
 
