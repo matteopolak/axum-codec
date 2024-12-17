@@ -80,7 +80,7 @@ macro_rules! method_router_chain_method {
 		#[must_use]
 		pub fn $name<T, H, I, D>(mut self, handler: H) -> Self
 		where
-			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
+			H: CodecHandler<T, I, D, S> + Clone + Send + 'static,
 			I: Input + Send + 'static,
 			D: IntoCodecResponse + Send + Sync + 'static,
 			S: Clone + Send + Sync + 'static,
@@ -99,7 +99,7 @@ macro_rules! method_router_chain_method {
 		#[must_use]
 		pub fn $name<T, H, I, D>(mut self, handler: H) -> Self
 		where
-			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
+			H: CodecHandler<T, I, D, S> + Clone + Send + 'static,
 			I: Input + Send + 'static,
 			D: IntoCodecResponse + Send + 'static,
 			S: Clone + Send + Sync + 'static,
@@ -113,7 +113,7 @@ macro_rules! method_router_chain_method {
 		#[must_use]
 		pub fn $with<T, H, I, D, F>(mut self, handler: H, transform: F) -> Self
 		where
-			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
+			H: CodecHandler<T, I, D, S> + Clone + Send + 'static,
 			I: Input + Send + 'static,
 			D: IntoCodecResponse + Send + 'static,
 			S: Clone + Send + Sync + 'static,
@@ -153,9 +153,9 @@ macro_rules! method_router_top_level {
 		#[doc = concat!("Route `", stringify!($name) ,"` requests to the given handler. See [`axum::routing::", stringify!($name) , "`] for more details.")]
 		pub fn $name<T, H, I, D, S>(handler: H) -> MethodRouter<S, Infallible>
 		where
-			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
+			H: CodecHandler<T, I, D, S> + Clone + Send + 'static,
 			I: Input + Send + 'static,
-			D: IntoCodecResponse + Send + Sync + 'static,
+			D: IntoCodecResponse + Send + 'static,
 			S: Clone + Send + Sync + 'static,
 			T: 'static
 		{
@@ -170,7 +170,7 @@ macro_rules! method_router_top_level {
 		#[doc = concat!("Route `", stringify!($name) ,"` requests to the given handler. See [`axum::routing::", stringify!($name) , "`] for more details.")]
 		pub fn $name<T, H, I, D, S>(handler: H) -> MethodRouter<S, Infallible>
 		where
-			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
+			H: CodecHandler<T, I, D, S> + Clone + Send + 'static,
 			I: Input + Send + 'static,
 			D: IntoCodecResponse + Send + 'static,
 			S: Clone + Send + Sync + 'static,
@@ -185,9 +185,9 @@ macro_rules! method_router_top_level {
 		#[must_use]
 		pub fn $with<T, H, I, D, S, F>(handler: H, transform: F) -> MethodRouter<S, Infallible>
 		where
-			H: CodecHandler<T, I, D, S> + Clone + Send + Sync + 'static,
+			H: CodecHandler<T, I, D, S> + Clone + Send + 'static,
 			I: Input + Send + 'static,
-			D: IntoCodecResponse + Send + Sync + 'static,
+			D: IntoCodecResponse + Send + 'static,
 			S: Clone + Send + Sync + 'static,
 			T: 'static,
 			F: FnOnce(aide::transform::TransformOperation) -> aide::transform::TransformOperation,

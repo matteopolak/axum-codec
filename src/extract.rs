@@ -1,5 +1,8 @@
 use core::fmt;
-use std::ops::{Deref, DerefMut};
+use std::{
+	marker::PhantomData,
+	ops::{Deref, DerefMut},
+};
 
 use axum::{
 	body::Bytes,
@@ -47,15 +50,17 @@ use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoC
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Codec<T>(pub T);
 
-impl<T> Codec<T>
-where
-	T: CodecEncode,
-{
+impl<T> Codec<T> {
 	/// Consumes the [`Codec`] and returns the inner value.
 	pub fn into_inner(self) -> T {
 		self.0
 	}
+}
 
+impl<T> Codec<T>
+where
+	T: CodecEncode,
+{
 	/// Converts the inner value into a response with the given content type.
 	///
 	/// If serialization fails, the rejection is converted into a response. See
@@ -167,6 +172,105 @@ where
 {
 	fn validate(&self) -> Result<(), validator::ValidationErrors> {
 		self.0.validate()
+	}
+}
+
+pub struct BorrowCodec<T> {
+	bytes: Bytes,
+	content_type: ContentType,
+	_marker: PhantomData<T>,
+}
+
+impl<T> BorrowCodec<T> {
+	/// Zero-copy codec extractor.
+	///
+	/// Similar to [`Codec`] in that it can decode from various formats,
+	/// but different in that the backing bytes are kept alive after decoding
+	/// and it cannot be used as a response encoder.
+	///
+	/// # Examples
+	///
+	/// ```edition2021
+	/// # use axum_codec::{BorrowCodec, ContentType};
+	/// # use axum::response::Response;
+	/// # use std::borrow::Cow;
+	/// #
+	/// # fn main() {
+	/// #[axum_codec::apply(decode)]
+	/// struct Greeting {
+	///   hello: Cow<'d, [u8]>,
+	/// }
+	///
+	/// async fn my_route(body: BorrowCodec<Greeting>) -> Result<(), Response> {
+	///   let body = body.decode()?;
+	///
+	///   // do something with `body.hello`...
+	/// }
+	/// # }
+	/// ```
+	///
+	/// # Errors
+	///
+	/// See [`CodecRejection`] for more information.
+	pub fn decode<'de, 's: 'de>(&'s self) -> Result<T, CodecRejection>
+	where
+		T: CodecDecode<'de>,
+	{
+		let data = Codec::<T>::from_bytes(&self.bytes, self.content_type)?;
+
+		#[cfg(feature = "validator")]
+		data.validate()?;
+
+		Ok(data.into_inner())
+	}
+}
+
+#[axum::async_trait]
+impl<T, S> FromRequest<S> for BorrowCodec<T>
+where
+	T: CodecDecode<'static>,
+	S: Send + Sync + 'static,
+{
+	type Rejection = Response;
+
+	async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+		let (mut parts, body) = req.into_parts();
+		let accept = Accept::from_request_parts(&mut parts, state).await.unwrap();
+
+		let req = Request::from_parts(parts, body);
+
+		let content_type = req
+			.headers()
+			.get(header::CONTENT_TYPE)
+			.and_then(ContentType::from_header)
+			.unwrap_or_default();
+
+		let bytes = Bytes::from_request(req, state)
+			.await
+			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
+
+		Ok(Self {
+			bytes,
+			content_type,
+			_marker: PhantomData,
+		})
+	}
+}
+
+#[cfg(feature = "aide")]
+impl<T> aide::operation::OperationInput for BorrowCodec<T>
+where
+	T: schemars::JsonSchema,
+{
+	fn operation_input(ctx: &mut aide::gen::GenContext, operation: &mut aide::openapi::Operation) {
+		axum::Json::<T>::operation_input(ctx, operation);
+	}
+
+	fn inferred_early_responses(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Vec<(Option<u16>, aide::openapi::Response)> {
+		axum::Json::<T>::inferred_early_responses(ctx, operation)
 	}
 }
 

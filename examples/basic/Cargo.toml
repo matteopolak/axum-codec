@@ -7,5 +7,5 @@ edition = "2021"
 axum = "0.7"
 serde = { version = "1", features = ["derive", "rc"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-axum-codec = { path = "../..", features = ["full-codecs", "macros", "validator"] }
+axum-codec = { path = "../..", features = ["macros", "validator", "json", "bincode", "msgpack", "toml", "yaml"] }
 

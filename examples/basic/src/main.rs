@@ -1,10 +1,13 @@
+use std::borrow::Cow;
+
 use axum::{
 	extract::{DefaultBodyLimit, State},
+	response::Response,
 	Router,
 };
 use axum_codec::{
 	routing::{get, post},
-	Codec, IntoCodecResponse,
+	Accept, BorrowCodec, Codec, CodecRejection, IntoCodecResponse,
 };
 
 #[axum_codec::apply(encode, decode)]
@@ -37,11 +40,38 @@ async fn state(State(state): State<String>) -> Codec<Greeting> {
 	Codec(Greeting { message: state })
 }
 
+#[axum_codec::apply(encode, decode)]
+struct BorrowGreeting<'d> {
+	#[serde(borrow)]
+	message: Cow<'d, str>,
+}
+
+async fn borrow_greet(
+	accept: Accept,
+	greeting: BorrowCodec<BorrowGreeting<'_>>,
+) -> Result<Response, CodecRejection> {
+	let greeting = greeting.decode()?;
+	let is_zero = matches!(greeting.message, Cow::Borrowed(..));
+
+	Ok(
+		Codec(Greeting {
+			message: if is_zero {
+				"Borrowing from input"
+			} else {
+				"Not borrowing from input (for JSON, probably using an escaped character)"
+			}
+			.to_string(),
+		})
+		.into_codec_response(accept.into()),
+	)
+}
+
 #[tokio::main]
 async fn main() {
 	let app = Router::new()
 		.route("/me", get(me).into())
 		.route("/greet", post(greet).into())
+		.route("/borrow-greet", post(borrow_greet).into())
 		.route("/state", get(state).into())
 		.layer(DefaultBodyLimit::max(1024))
 		.with_state("Hello, world!".to_string());
