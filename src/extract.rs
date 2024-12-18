@@ -1,7 +1,7 @@
-use core::fmt;
-use std::{
-	marker::PhantomData,
+use core::{
+	fmt,
 	ops::{Deref, DerefMut},
+	pin::Pin,
 };
 
 use axum::{
@@ -175,53 +175,141 @@ where
 	}
 }
 
+/// Zero-copy codec extractor.
+///
+/// Similar to [`Codec`] in that it can decode from various formats,
+/// but different in that the backing bytes are kept alive after decoding
+/// and it cannot be used as a response encoder.
+///
+/// # Examples
+///
+/// ```edition2021
+/// # use axum_codec::{BorrowCodec, ContentType};
+/// # use axum::response::Response;
+/// # use std::borrow::Cow;
+/// #
+/// # fn main() {
+/// #[axum_codec::apply(decode)]
+/// struct Greeting<'d> {
+///   hello: Cow<'d, [u8]>,
+/// }
+///
+/// async fn my_route(body: BorrowCodec<Greeting<'_>>) -> Result<(), Response> {
+///   // do something with `body.hello`...
+///   println!("{:?}", body.hello);
+///
+///   Ok(())
+/// }
+/// # }
+/// ```
+///
+/// # Errors
+///
+/// See [`CodecRejection`] for more information.
 pub struct BorrowCodec<T> {
-	bytes: Bytes,
-	content_type: ContentType,
-	_marker: PhantomData<T>,
+	data: T,
+	#[allow(dead_code)]
+	#[doc(hidden)]
+	bytes: Pin<Bytes>,
 }
 
-impl<T> BorrowCodec<T> {
-	/// Zero-copy codec extractor.
-	///
-	/// Similar to [`Codec`] in that it can decode from various formats,
-	/// but different in that the backing bytes are kept alive after decoding
-	/// and it cannot be used as a response encoder.
-	///
-	/// # Examples
-	///
-	/// ```edition2021
-	/// # use axum_codec::{BorrowCodec, ContentType};
-	/// # use axum::response::Response;
-	/// # use std::borrow::Cow;
-	/// #
-	/// # fn main() {
-	/// #[axum_codec::apply(decode)]
-	/// struct Greeting {
-	///   hello: Cow<'d, [u8]>,
-	/// }
-	///
-	/// async fn my_route(body: BorrowCodec<Greeting>) -> Result<(), Response> {
-	///   let body = body.decode()?;
-	///
-	///   // do something with `body.hello`...
-	/// }
-	/// # }
-	/// ```
+impl<T> fmt::Debug for BorrowCodec<T>
+where
+	T: fmt::Debug,
+{
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		f.debug_struct("BorrowCodec")
+			.field("data", &self.data)
+			.finish_non_exhaustive()
+	}
+}
+
+impl<T> PartialEq for BorrowCodec<T>
+where
+	T: PartialEq,
+{
+	fn eq(&self, other: &Self) -> bool {
+		self.data == other.data
+	}
+}
+
+impl<T> Eq for BorrowCodec<T> where T: Eq {}
+
+impl<T> PartialOrd for BorrowCodec<T>
+where
+	T: PartialOrd,
+{
+	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+		self.data.partial_cmp(&other.data)
+	}
+}
+
+impl<T> Ord for BorrowCodec<T>
+where
+	T: Ord,
+{
+	fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+		self.data.cmp(&other.data)
+	}
+}
+
+impl<T> std::hash::Hash for BorrowCodec<T>
+where
+	T: std::hash::Hash,
+{
+	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+		self.data.hash(state);
+	}
+}
+
+impl<T> Default for BorrowCodec<T>
+where
+	T: Default,
+{
+	fn default() -> Self {
+		Self {
+			data: Default::default(),
+			bytes: Pin::new(Bytes::new()),
+		}
+	}
+}
+
+impl<'de, T> BorrowCodec<T>
+where
+	T: CodecDecode<'de>,
+{
+	/// Creates a new [`BorrowCodec`] from the given bytes and content type.
 	///
 	/// # Errors
 	///
 	/// See [`CodecRejection`] for more information.
-	pub fn decode<'de, 's: 'de>(&'s self) -> Result<T, CodecRejection>
-	where
-		T: CodecDecode<'de>,
-	{
-		let data = Codec::<T>::from_bytes(&self.bytes, self.content_type)?;
+	pub fn from_bytes(bytes: Bytes, content_type: ContentType) -> Result<Self, CodecRejection> {
+		let bytes = Pin::new(bytes);
 
-		#[cfg(feature = "validator")]
-		data.validate()?;
+		Ok(Self {
+			data: Codec::<T>::from_bytes(
+				// SAFETY: The bytes that are being referenced by the slice are pinned
+				// and will not be dropped while the slice is alive.
+				unsafe { std::slice::from_raw_parts(bytes.as_ptr(), bytes.len()) },
+				content_type,
+			)?
+			.into_inner(),
+			bytes,
+		})
+	}
+}
 
-		Ok(data.into_inner())
+impl<T> Deref for BorrowCodec<T> {
+	type Target = T;
+
+	fn deref(&self) -> &Self::Target {
+		&self.data
+	}
+}
+
+impl<T> DerefMut for BorrowCodec<T> {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.data
 	}
 }
 
@@ -249,11 +337,15 @@ where
 			.await
 			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
 
-		Ok(Self {
-			bytes,
-			content_type,
-			_marker: PhantomData,
-		})
+		let data =
+			Self::from_bytes(bytes, content_type).map_err(|e| e.into_codec_response(accept.into()))?;
+
+		#[cfg(feature = "validator")]
+		data
+			.validate()
+			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
+
+		Ok(data)
 	}
 }
 
@@ -303,6 +395,46 @@ mod test {
 
 		assert_eq!(data, Data {
 			hello: "world".into()
+		});
+	}
+}
+
+#[cfg(any(test, miri))]
+mod miri {
+	use std::borrow::Cow;
+
+	use axum::body::Bytes;
+
+	use super::{BorrowCodec, ContentType};
+
+	#[crate::apply(decode, crate = "crate")]
+	#[derive(Debug, PartialEq, Eq)]
+	struct BorrowData<'a> {
+		#[serde(borrow)]
+		hello: Cow<'a, str>,
+	}
+
+	#[test]
+	fn test_zero_copy() {
+		let bytes = b"{\"hello\": \"world\"}".to_vec();
+		let data =
+			BorrowCodec::<BorrowData>::from_bytes(Bytes::from(bytes), ContentType::Json).unwrap();
+
+		assert_eq!(&*data, &BorrowData {
+			hello: Cow::Borrowed("world")
+		});
+	}
+
+	#[test]
+	fn test_zero_copy_mem_swap() {
+		let bytes = b"{\"hello\": \"world\"}".to_vec();
+		let mut data =
+			BorrowCodec::<BorrowData>::from_bytes(Bytes::from(bytes), ContentType::Json).unwrap();
+
+		core::mem::swap(&mut data.hello, &mut Cow::Borrowed("everyone"));
+
+		assert_eq!(&*data, &BorrowData {
+			hello: Cow::Borrowed("everyone")
 		});
 	}
 }

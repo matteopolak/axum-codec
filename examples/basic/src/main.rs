@@ -2,12 +2,11 @@ use std::borrow::Cow;
 
 use axum::{
 	extract::{DefaultBodyLimit, State},
-	response::Response,
 	Router,
 };
 use axum_codec::{
 	routing::{get, post},
-	Accept, BorrowCodec, Codec, CodecRejection, IntoCodecResponse,
+	BorrowCodec, Codec, IntoCodecResponse,
 };
 
 #[axum_codec::apply(encode, decode)]
@@ -46,24 +45,17 @@ struct BorrowGreeting<'d> {
 	message: Cow<'d, str>,
 }
 
-async fn borrow_greet(
-	accept: Accept,
-	greeting: BorrowCodec<BorrowGreeting<'_>>,
-) -> Result<Response, CodecRejection> {
-	let greeting = greeting.decode()?;
+async fn borrow_greet(greeting: BorrowCodec<BorrowGreeting<'_>>) -> impl IntoCodecResponse {
 	let is_zero = matches!(greeting.message, Cow::Borrowed(..));
 
-	Ok(
-		Codec(Greeting {
-			message: if is_zero {
-				"Borrowing from input"
-			} else {
-				"Not borrowing from input (for JSON, probably using an escaped character)"
-			}
-			.to_string(),
-		})
-		.into_codec_response(accept.into()),
-	)
+	Codec(Greeting {
+		message: if is_zero {
+			"Borrowing from input"
+		} else {
+			"Not borrowing from input (for JSON, probably using an escaped character)"
+		}
+		.to_string(),
+	})
 }
 
 #[tokio::main]

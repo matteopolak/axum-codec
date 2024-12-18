@@ -1,4 +1,3 @@
-#![forbid(unsafe_code)]
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 #![cfg_attr(
@@ -13,7 +12,7 @@
 	)),
 	allow(unreachable_code, unused_variables)
 )]
-#![doc = include_str!("../README.md")]
+#![cfg_attr(not(miri), doc = include_str!("../README.md"))]
 
 mod content;
 mod decode;
@@ -56,6 +55,8 @@ pub use macros::debug_middleware;
 
 #[cfg(test)]
 mod test {
+	use std::borrow::Cow;
+
 	use super::*;
 
 	#[apply(decode, encode)]
@@ -70,7 +71,7 @@ mod test {
 	#[apply(decode, encode)]
 	#[derive(Debug, PartialEq)]
 	struct BorrowedData<'a> {
-		string: &'a str,
+		string: Cow<'a, str>,
 		integer: i32,
 		boolean: bool,
 	}
@@ -86,7 +87,7 @@ mod test {
 
 	fn borrowed_data<'a>() -> BorrowedData<'a> {
 		BorrowedData {
-			string: "hello",
+			string: Cow::Borrowed("hello"),
 			integer: 42,
 			boolean: true,
 		}
@@ -103,7 +104,6 @@ mod test {
 	}
 
 	#[test]
-	#[should_panic(expected = "invalid type: string \\\"hello\\\", expected a borrowed string")]
 	fn test_borrowed_msgpack_roundtrip() {
 		let data = borrowed_data();
 		let encoded = Codec(&data).to_msgpack().unwrap();
@@ -186,7 +186,6 @@ mod test {
 	}
 
 	#[test]
-	#[should_panic(expected = "invalid type: string \\\"hello\\\", expected a borrowed string")]
 	fn test_borrowed_toml_roundtrip() {
 		let data = borrowed_data();
 		let encoded = Codec(&data).to_toml().unwrap();
@@ -217,6 +216,7 @@ mod test {
 	}
 
 	#[test]
+	#[cfg(feature = "bitcode")]
 	fn test_bitcode_roundtrip() {
 		let encoded = Codec(data()).to_bitcode();
 
@@ -226,6 +226,7 @@ mod test {
 	}
 
 	#[test]
+	#[cfg(feature = "bitcode")]
 	fn test_borrowed_bitcode_roundtrip() {
 		let encoded = Codec(borrowed_data()).to_bitcode();
 
