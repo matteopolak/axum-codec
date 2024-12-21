@@ -23,7 +23,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly
-          components: rustfmt, clippy
+          components: rustfmt, clippy, miri
       - name: setup cache
         id: cache
         uses: actions/cache@v4
@@ -42,6 +42,8 @@ jobs:
         run: cargo hack check --feature-powerset --skip serde,macros,full-codecs,default --no-dev-deps --at-least-one-of bincode,bitcode,json,msgpack,toml,yaml --group-features json,msgpack,toml,yaml
       - name: cargo test
         run: cargo test
+      - name: cargo miri test --tests extract
+        run: cargo miri test
       - name: cargo fmt
         run: cargo fmt --all -- --check
       - name: cargo clippy

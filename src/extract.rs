@@ -1,12 +1,14 @@
-use core::fmt;
-use std::ops::{Deref, DerefMut};
+use core::{
+	fmt,
+	ops::{Deref, DerefMut},
+};
 
 use axum::{
-	body::Bytes,
 	extract::{FromRequest, FromRequestParts, Request},
 	http::header,
 	response::{IntoResponse, Response},
 };
+use bytes::BytesMut;
 
 use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoCodecResponse};
 
@@ -47,15 +49,17 @@ use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoC
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Codec<T>(pub T);
 
-impl<T> Codec<T>
-where
-	T: CodecEncode,
-{
+impl<T> Codec<T> {
 	/// Consumes the [`Codec`] and returns the inner value.
 	pub fn into_inner(self) -> T {
 		self.0
 	}
+}
 
+impl<T> Codec<T>
+where
+	T: CodecEncode,
+{
 	/// Converts the inner value into a response with the given content type.
 	///
 	/// If serialization fails, the rejection is converted into a response. See
@@ -111,7 +115,7 @@ where
 			.and_then(ContentType::from_header)
 			.unwrap_or_default();
 
-		let bytes = Bytes::from_request(req, state)
+		let bytes = BytesMut::from_request(req, state)
 			.await
 			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
 		let data =
@@ -170,6 +174,204 @@ where
 	}
 }
 
+/// Zero-copy codec extractor.
+///
+/// Similar to [`Codec`] in that it can decode from various formats,
+/// but different in that the backing bytes are kept alive after decoding
+/// and it cannot be used as a response encoder.
+///
+/// Note that the decoded data cannot be modified, as it is borrowed.
+/// If you need to modify the data, use [`Codec`] instead.
+///
+/// # Examples
+///
+/// ```edition2021
+/// # use axum_codec::{BorrowCodec, ContentType};
+/// # use axum::response::Response;
+/// # use std::borrow::Cow;
+/// #
+/// # fn main() {
+/// #[axum_codec::apply(decode)]
+/// struct Greeting<'d> {
+///   hello: Cow<'d, [u8]>,
+/// }
+///
+/// async fn my_route(body: BorrowCodec<Greeting<'_>>) -> Result<(), Response> {
+///   // do something with `body.hello`...
+///   println!("{:?}", body.hello);
+///
+///   Ok(())
+/// }
+/// # }
+/// ```
+///
+/// # Errors
+///
+/// See [`CodecRejection`] for more information.
+pub struct BorrowCodec<T> {
+	data: T,
+	#[allow(dead_code)]
+	#[doc(hidden)]
+	bytes: BytesMut,
+}
+
+impl<T> BorrowCodec<T> {
+	/// Returns a mutable reference to the inner value.
+	///
+	/// # Safety
+	///
+	/// Callers must ensure that the inner value is not kept alive longer
+	/// than the original [`BorrowCodec`] that it came from. For example,
+	/// via [`std::mem::swap`] or [`std::mem::replace`].
+	pub unsafe fn as_mut_unchecked(&mut self) -> &mut T {
+		&mut self.data
+	}
+}
+
+impl<T> AsRef<T> for BorrowCodec<T> {
+	fn as_ref(&self) -> &T {
+		self
+	}
+}
+
+impl<T> Deref for BorrowCodec<T> {
+	type Target = T;
+
+	fn deref(&self) -> &Self::Target {
+		&self.data
+	}
+}
+
+impl<T> fmt::Debug for BorrowCodec<T>
+where
+	T: fmt::Debug,
+{
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		f.debug_struct("BorrowCodec")
+			.field("data", &self.data)
+			.finish_non_exhaustive()
+	}
+}
+
+impl<T> PartialEq for BorrowCodec<T>
+where
+	T: PartialEq,
+{
+	fn eq(&self, other: &Self) -> bool {
+		self.data == other.data
+	}
+}
+
+impl<T> Eq for BorrowCodec<T> where T: Eq {}
+
+impl<T> PartialOrd for BorrowCodec<T>
+where
+	T: PartialOrd,
+{
+	fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+		self.data.partial_cmp(&other.data)
+	}
+}
+
+impl<T> Ord for BorrowCodec<T>
+where
+	T: Ord,
+{
+	fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+		self.data.cmp(&other.data)
+	}
+}
+
+impl<T> std::hash::Hash for BorrowCodec<T>
+where
+	T: std::hash::Hash,
+{
+	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+		self.data.hash(state);
+	}
+}
+
+impl<'de, T> BorrowCodec<T>
+where
+	T: CodecDecode<'de>,
+{
+	/// Creates a new [`BorrowCodec`] from the given bytes and content type.
+	///
+	/// # Errors
+	///
+	/// See [`CodecRejection`] for more information.
+	pub fn from_bytes(bytes: BytesMut, content_type: ContentType) -> Result<Self, CodecRejection> {
+		let data = Codec::<T>::from_bytes(
+				// SAFETY: The bytes that are being referenced by the slice are behind a pointer
+				// so they will not move. The bytes are also kept alive by the struct that contains
+				// this struct that references the slice, so the bytes will not be deallocated
+				// while this struct is alive.
+				unsafe { std::slice::from_raw_parts(bytes.as_ptr(), bytes.len()) },
+				content_type,
+			)?
+			.into_inner();
+
+		Ok(Self {
+			data,
+			bytes,
+		})
+	}
+}
+
+#[axum::async_trait]
+impl<T, S> FromRequest<S> for BorrowCodec<T>
+where
+	T: CodecDecode<'static>,
+	S: Send + Sync + 'static,
+{
+	type Rejection = Response;
+
+	async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
+		let (mut parts, body) = req.into_parts();
+		let accept = Accept::from_request_parts(&mut parts, state).await.unwrap();
+
+		let req = Request::from_parts(parts, body);
+
+		let content_type = req
+			.headers()
+			.get(header::CONTENT_TYPE)
+			.and_then(ContentType::from_header)
+			.unwrap_or_default();
+
+		let bytes = BytesMut::from_request(req, state)
+			.await
+			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
+
+		let data =
+			Self::from_bytes(bytes, content_type).map_err(|e| e.into_codec_response(accept.into()))?;
+
+		#[cfg(feature = "validator")]
+		data
+			.as_ref()
+			.validate()
+			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
+
+		Ok(data)
+	}
+}
+
+#[cfg(feature = "aide")]
+impl<T> aide::operation::OperationInput for BorrowCodec<T>
+where
+	T: schemars::JsonSchema,
+{
+	fn operation_input(ctx: &mut aide::gen::GenContext, operation: &mut aide::openapi::Operation) {
+		axum::Json::<T>::operation_input(ctx, operation);
+	}
+
+	fn inferred_early_responses(
+		ctx: &mut aide::gen::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) -> Vec<(Option<u16>, aide::openapi::Response)> {
+		axum::Json::<T>::inferred_early_responses(ctx, operation)
+	}
+}
+
 #[cfg(test)]
 mod test {
 	use super::{Codec, ContentType};
@@ -200,5 +402,30 @@ mod test {
 		assert_eq!(data, Data {
 			hello: "world".into()
 		});
+	}
+}
+
+#[cfg(any(test, miri))]
+mod miri {
+	use std::borrow::Cow;
+
+	use bytes::Bytes;
+
+	use super::*;
+
+	#[crate::apply(decode, crate = "crate")]
+	#[derive(Debug, PartialEq, Eq)]
+	struct BorrowData<'a> {
+		#[serde(borrow)]
+		hello: Cow<'a, str>,
+	}
+
+	#[test]
+	fn test_zero_copy() {
+		let bytes = b"{\"hello\": \"world\"}".to_vec();
+		let data =
+			BorrowCodec::<BorrowData>::from_bytes(BytesMut::from(Bytes::from(bytes)), ContentType::Json).unwrap();
+
+		assert_eq!(data.hello, Cow::Borrowed("world"));
 	}
 }

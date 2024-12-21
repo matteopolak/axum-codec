@@ -147,6 +147,9 @@ mod __private {
 
 		codec_trait.extend(quote! {
 			#input
+			#[diagnostic::on_unimplemented(
+				note = "If you're looking for a zero-copy extractor, use `BorrowCodec`"
+			)]
 			pub trait CodecDecode<'de>
 		});
 

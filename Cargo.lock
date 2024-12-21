@@ -129,6 +129,7 @@ dependencies = [
  "axum-codec-macros",
  "bincode",
  "bitcode",
+ "bytes",
  "ciborium",
  "mime",
  "rmp-serde",
