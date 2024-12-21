@@ -136,6 +136,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "serde_yaml",
  "thiserror",
  "tokio",

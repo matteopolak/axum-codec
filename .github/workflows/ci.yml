@@ -9,6 +9,9 @@ on:
       - 'README.md' # it's included in the crate root
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 name: ci
 
@@ -38,8 +41,8 @@ jobs:
         run: cargo install cargo-hack --locked
 
       - name: cargo hack
-        #        run: cargo hack check --feature-powerset --skip serde,macros,full-codecs,default --no-dev-deps --at-least-one-of bincode,bitcode,cbor,json,msgpack,toml,yaml --group-features cbor,json,msgpack,toml,yaml
-        run: cargo hack check --feature-powerset --skip serde,macros,full-codecs,default --no-dev-deps --at-least-one-of bincode,bitcode,json,msgpack,toml,yaml --group-features json,msgpack,toml,yaml
+        #        run: cargo hack check --feature-powerset --skip serde,macros,full-codecs,default --no-dev-deps --at-least-one-of bincode,bitcode,cbor,json,msgpack,toml,yaml,form --group-features cbor,json,msgpack,toml,yaml,form
+        run: cargo hack check --feature-powerset --skip serde,macros,full-codecs,default --no-dev-deps --at-least-one-of bincode,bitcode,json,msgpack,toml,yaml,form --group-features json,msgpack,toml,yaml,form
       - name: cargo test
         run: cargo test
       - name: cargo miri test --tests extract
