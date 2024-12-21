@@ -11,16 +11,7 @@ A body extractor for the [Axum](https://github.com/tokio-rs/axum) web framework.
 - Supports encoding and decoding of various formats with a single extractor.
 - Provides a wrapper for [`axum::routing::method_routing`](https://docs.rs/axum/latest/axum/routing/method_routing/index.html) to automatically encode responses in the correct format according to the specified `Accept` header (with a fallback to `Content-Type`, then one of the enabled formats).
 - Provides an attribute macro (under the `macros` feature) to add derives for all enabled formats to a struct/enum.
-
-## Todo
-
-- [x] Support `bitcode`, `bincode`, `ciborium`, `rmp`, `toml`, `serde_yaml`, and `serde_json`
-- [x] Add custom `MethodRouter` to automatically encode responses in the correct format
-- [x] Add macro to derive all enabled formats for a struct/enum
-- [x] Add support for [`aide`](https://github.com/tamasfe/aide)
-- [x] Add support for [`validator`](https://github.com/Keats/validator)
-- [ ] Support more formats (issues and PRs welcome)
-- [ ] Add benchmarks?
+- Zero-copy decoding with `BorrowCodec`.
 
 Here's a quick example that can do the following:
 

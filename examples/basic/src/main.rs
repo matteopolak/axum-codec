@@ -53,7 +53,7 @@ async fn borrow_greet(greeting: BorrowCodec<BorrowGreeting<'_>>) -> impl IntoCod
 			"Message is borrowed".into()
 		} else {
 			"Message is owned".into()
-		}
+		},
 	})
 }
 

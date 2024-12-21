@@ -302,19 +302,16 @@ where
 	/// See [`CodecRejection`] for more information.
 	pub fn from_bytes(bytes: BytesMut, content_type: ContentType) -> Result<Self, CodecRejection> {
 		let data = Codec::<T>::from_bytes(
-				// SAFETY: The bytes that are being referenced by the slice are behind a pointer
-				// so they will not move. The bytes are also kept alive by the struct that contains
-				// this struct that references the slice, so the bytes will not be deallocated
-				// while this struct is alive.
-				unsafe { std::slice::from_raw_parts(bytes.as_ptr(), bytes.len()) },
-				content_type,
-			)?
-			.into_inner();
+			// SAFETY: The bytes that are being referenced by the slice are behind a pointer
+			// so they will not move. The bytes are also kept alive by the struct that contains
+			// this struct that references the slice, so the bytes will not be deallocated
+			// while this struct is alive.
+			unsafe { std::slice::from_raw_parts(bytes.as_ptr(), bytes.len()) },
+			content_type,
+		)?
+		.into_inner();
 
-		Ok(Self {
-			data,
-			bytes,
-		})
+		Ok(Self { data, bytes })
 	}
 }
 
@@ -424,7 +421,8 @@ mod miri {
 	fn test_zero_copy() {
 		let bytes = b"{\"hello\": \"world\"}".to_vec();
 		let data =
-			BorrowCodec::<BorrowData>::from_bytes(BytesMut::from(Bytes::from(bytes)), ContentType::Json).unwrap();
+			BorrowCodec::<BorrowData>::from_bytes(BytesMut::from(Bytes::from(bytes)), ContentType::Json)
+				.unwrap();
 
 		assert_eq!(data.hello, Cow::Borrowed("world"));
 	}
