@@ -24,6 +24,17 @@ where
 		serde_json::from_slice(bytes).map(Self)
 	}
 
+	/// Attempts to deserialize the given bytes as [URL-encoded form data](https://url.spec.whatwg.org/#urlencoded-parsing).
+	///
+	/// # Errors
+	///
+	/// See [`serde_urlencoded::from_bytes`].
+	#[cfg(feature = "form")]
+	#[inline]
+	pub fn from_form(bytes: &'b [u8]) -> Result<Self, serde_urlencoded::de::Error> {
+		serde_urlencoded::from_bytes(bytes).map(Self)
+	}
+
 	/// Attempts to deserialize the given bytes as [MessagePack](https://msgpack.org).
 	/// Does not perform any validation if the `validator` feature is enabled. For
 	/// validation, use [`Self::from_bytes`].
@@ -124,6 +135,8 @@ impl<'b, T> Codec<T> {
 		let codec = match content_type {
 			#[cfg(feature = "json")]
 			ContentType::Json => Self::from_json(bytes)?,
+			#[cfg(feature = "form")]
+			ContentType::Form => Self::from_form(bytes)?,
 			#[cfg(feature = "msgpack")]
 			ContentType::MsgPack => Self::from_msgpack(bytes)?,
 			#[cfg(feature = "bincode")]

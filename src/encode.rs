@@ -20,6 +20,9 @@ pub enum Error {
 	#[cfg(feature = "json")]
 	#[error(transparent)]
 	Json(#[from] serde_json::Error),
+	#[cfg(feature = "form")]
+	#[error(transparent)]
+	Form(#[from] serde_urlencoded::ser::Error),
 	#[cfg(feature = "msgpack")]
 	#[error(transparent)]
 	MsgPack(#[from] rmp_serde::encode::Error),
@@ -62,6 +65,17 @@ where
 	#[inline]
 	pub fn to_json(&self) -> Result<Vec<u8>, serde_json::Error> {
 		serde_json::to_vec(&self.0)
+	}
+
+	/// Attempts to serialize the given value as [URL-encoded form data](https://url.spec.whatwg.org/#urlencoded-parsing).
+	///
+	/// # Errors
+	///
+	/// See [`serde_urlencoded::to_string`].
+	#[cfg(feature = "form")]
+	#[inline]
+	pub fn to_form(&self) -> Result<Vec<u8>, serde_urlencoded::ser::Error> {
+		serde_urlencoded::to_string(&self.0).map(String::into_bytes)
 	}
 
 	/// Attempts to serialize the given value as [MessagePack](https://msgpack.org).
@@ -152,6 +166,8 @@ impl<T> Codec<T> {
 		Ok(match content_type {
 			#[cfg(feature = "json")]
 			ContentType::Json => self.to_json()?,
+			#[cfg(feature = "form")]
+			ContentType::Form => self.to_form()?,
 			#[cfg(feature = "msgpack")]
 			ContentType::MsgPack => self.to_msgpack()?,
 			#[cfg(feature = "bincode")]

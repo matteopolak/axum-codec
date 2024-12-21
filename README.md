@@ -91,10 +91,10 @@ async fn main() {
 
 - `macros`: Enables the `axum_codec::apply` attribute macro.
 - `json`\*: Enables [`JSON`](https://github.com/serde-rs/json) support.
+- `form`: Enables [`x-www-form-urlencoded`](https://github.com/nox/serde_urlencoded) support.
 - `msgpack`: Enables [`MessagePack`](https://github.com/3Hren/msgpack-rust) support.
 - `bincode`: Enables [`Bincode`](https://github.com/bincode-org/bincode) support.
 - `bitcode`: Enables [`Bitcode`](https://github.com/SoftbearStudios/bitcode) support.
-- `cbor`: Enables [`CBOR`](https://github.com/enarx/ciborium) support.
 - `yaml`: Enables [`YAML`](https://github.com/dtolnay/serde-yaml/releases) support.
 - `toml`: Enables [`TOML`](https://github.com/toml-rs/toml) support.
 - `aide`: Enables support for the [`Aide`](https://github.com/tamasfe/aide) documentation library.
@@ -106,6 +106,10 @@ async fn main() {
 
 Since `axum-codec` uses its own `IntoCodecResponse` trait for encoding responses, it is not compatible with `#[axum::debug_handler]`. However, a new `#[axum_codec::debug_handler]` (and `#[axum_codec::debug_middleware]`) macro
 is provided as a drop-in replacement.
+
+## Roadmap
+
+- [ ] Add `codec!` macro for defining custom codecs that use a different subset of enabled formats.
 
 ## License
 

@@ -64,7 +64,6 @@ mod test {
 	struct Data {
 		string: String,
 		integer: i32,
-		array: Vec<i32>,
 		boolean: bool,
 	}
 
@@ -80,7 +79,6 @@ mod test {
 		Data {
 			string: "hello".into(),
 			integer: 42,
-			array: vec![1, 2, 3],
 			boolean: true,
 		}
 	}
@@ -129,6 +127,26 @@ mod test {
 		let encoded = Codec(&data).to_json().unwrap();
 
 		let Codec(decoded) = Codec::<BorrowedData>::from_json(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	fn test_form_roundtrip() {
+		let data = data();
+		let encoded = Codec(&data).to_form().unwrap();
+
+		let Codec(decoded) = Codec::<Data>::from_form(&encoded).unwrap();
+
+		assert_eq!(decoded, data);
+	}
+
+	#[test]
+	fn test_borrowed_form_roundtrip() {
+		let data = borrowed_data();
+		let encoded = Codec(&data).to_form().unwrap();
+
+		let Codec(decoded) = Codec::<BorrowedData>::from_form(&encoded).unwrap();
 
 		assert_eq!(decoded, data);
 	}

@@ -11,6 +11,8 @@ use axum::{
 pub enum ContentType {
 	#[cfg(feature = "json")]
 	Json,
+	#[cfg(feature = "form")]
+	Form,
 	#[cfg(feature = "msgpack")]
 	MsgPack,
 	#[cfg(feature = "bincode")]
@@ -27,6 +29,7 @@ pub enum ContentType {
 
 #[cfg(not(any(
 	feature = "json",
+	feature = "form",
 	feature = "msgpack",
 	feature = "bincode",
 	feature = "bitcode",
@@ -36,19 +39,20 @@ pub enum ContentType {
 )))]
 const _: () = {
 	compile_error!(
-		"At least one of the following features must be enabled: `json`, `msgpack`, `bincode`, \
-		 `bitcode`, `cbor`, `yaml`, `toml`."
+		"At least one of the following features must be enabled: `json`, `form`, `msgpack`, \
+		 `bincode`, `bitcode`, `cbor`, `yaml`, `toml`."
 	);
 
 	impl Default for ContentType {
 		fn default() -> Self {
-			unreachable!()
+			unimplemented!()
 		}
 	}
 };
 
 #[cfg(any(
 	feature = "json",
+	feature = "form",
 	feature = "msgpack",
 	feature = "bincode",
 	feature = "bitcode",
@@ -61,6 +65,8 @@ impl Default for ContentType {
 	fn default() -> Self {
 		#[cfg(feature = "json")]
 		return Self::Json;
+		#[cfg(feature = "form")]
+		return Self::Form;
 		#[cfg(feature = "msgpack")]
 		return Self::MsgPack;
 		#[cfg(feature = "bincode")]
@@ -100,6 +106,8 @@ impl FromStr for ContentType {
 		Ok(match (mime.type_().as_str(), subtype.as_str()) {
 			#[cfg(feature = "json")]
 			("application", "json") => Self::Json,
+			#[cfg(feature = "form")]
+			("application", "x-www-form-urlencoded") => Self::Form,
 			#[cfg(feature = "msgpack")]
 			("application", "msgpack" | "vnd.msgpack" | "x-msgpack" | "x.msgpack") => Self::MsgPack,
 			#[cfg(feature = "bincode")]
@@ -162,6 +170,8 @@ impl ContentType {
 		match *self {
 			#[cfg(feature = "json")]
 			Self::Json => "application/json",
+			#[cfg(feature = "form")]
+			Self::Form => "application/x-www-form-urlencoded",
 			#[cfg(feature = "msgpack")]
 			Self::MsgPack => "application/vnd.msgpack",
 			#[cfg(feature = "bincode")]
@@ -277,9 +287,18 @@ where
 
 	async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
 		let header = None
-			.or_else(|| parts.headers.get(header::ACCEPT))
-			.or_else(|| parts.headers.get(header::CONTENT_TYPE))
-			.and_then(ContentType::from_header)
+			.or_else(|| {
+				parts
+					.headers
+					.get(header::ACCEPT)
+					.and_then(ContentType::from_header)
+			})
+			.or_else(|| {
+				parts
+					.headers
+					.get(header::CONTENT_TYPE)
+					.and_then(ContentType::from_header)
+			})
 			.unwrap_or_default();
 
 		Ok(Self(header))

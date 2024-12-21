@@ -8,7 +8,7 @@ use axum::{
 	http::header,
 	response::{IntoResponse, Response},
 };
-use bytes::BytesMut;
+use bytes::{Bytes, BytesMut};
 
 use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoCodecResponse};
 
@@ -115,11 +115,22 @@ where
 			.and_then(ContentType::from_header)
 			.unwrap_or_default();
 
-		let bytes = BytesMut::from_request(req, state)
-			.await
-			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
-		let data =
-			Codec::from_bytes(&bytes, content_type).map_err(|e| e.into_codec_response(accept.into()))?;
+		let data = match () {
+			#[cfg(feature = "form")]
+			() if content_type == ContentType::Form && req.method() == axum::http::Method::GET => {
+				let query = req.uri().query().unwrap_or("");
+
+				Codec::from_form(query.as_bytes()).map_err(CodecRejection::from)
+			}
+			() => {
+				let bytes = Bytes::from_request(req, state)
+					.await
+					.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
+
+				Codec::from_bytes(&bytes, content_type)
+			}
+		}
+		.map_err(|e| e.into_codec_response(accept.into()))?;
 
 		Ok(data)
 	}
@@ -335,9 +346,15 @@ where
 			.and_then(ContentType::from_header)
 			.unwrap_or_default();
 
-		let bytes = BytesMut::from_request(req, state)
-			.await
-			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
+		let bytes = match () {
+			#[cfg(feature = "form")]
+			() if content_type == ContentType::Form && req.method() == axum::http::Method::GET => {
+				req.uri().query().map_or_else(BytesMut::new, BytesMut::from)
+			}
+			() => BytesMut::from_request(req, state)
+				.await
+				.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?,
+		};
 
 		let data =
 			Self::from_bytes(bytes, content_type).map_err(|e| e.into_codec_response(accept.into()))?;

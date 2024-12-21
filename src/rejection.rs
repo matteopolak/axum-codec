@@ -14,6 +14,9 @@ pub enum CodecRejection {
 	#[cfg(feature = "json")]
 	#[error(transparent)]
 	Json(#[from] serde_json::Error),
+	#[cfg(feature = "form")]
+	#[error(transparent)]
+	Form(#[from] serde_urlencoded::de::Error),
 	#[cfg(feature = "msgpack")]
 	#[error(transparent)]
 	MsgPack(#[from] rmp_serde::decode::Error),
@@ -157,6 +160,8 @@ impl CodecRejection {
 			}
 			#[cfg(feature = "json")]
 			Self::Json(..) => "decode",
+			#[cfg(feature = "form")]
+			Self::Form(..) => "decode",
 			#[cfg(feature = "msgpack")]
 			Self::MsgPack(..) => "decode",
 			#[cfg(feature = "cbor")]
