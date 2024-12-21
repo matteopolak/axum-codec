@@ -9,6 +9,9 @@ on:
       - 'README.md' # it's included in the crate root
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 name: ci
 
