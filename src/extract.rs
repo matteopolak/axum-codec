@@ -1,15 +1,14 @@
 use core::{
 	fmt,
 	ops::{Deref, DerefMut},
-	pin::Pin,
 };
 
 use axum::{
-	body::Bytes,
 	extract::{FromRequest, FromRequestParts, Request},
 	http::header,
 	response::{IntoResponse, Response},
 };
+use bytes::BytesMut;
 
 use crate::{Accept, CodecDecode, CodecEncode, CodecRejection, ContentType, IntoCodecResponse};
 
@@ -116,7 +115,7 @@ where
 			.and_then(ContentType::from_header)
 			.unwrap_or_default();
 
-		let bytes = Bytes::from_request(req, state)
+		let bytes = BytesMut::from_request(req, state)
 			.await
 			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
 		let data =
@@ -181,6 +180,9 @@ where
 /// but different in that the backing bytes are kept alive after decoding
 /// and it cannot be used as a response encoder.
 ///
+/// Note that the decoded data cannot be modified, as it is borrowed.
+/// If you need to modify the data, use [`Codec`] instead.
+///
 /// # Examples
 ///
 /// ```edition2021
@@ -210,7 +212,34 @@ pub struct BorrowCodec<T> {
 	data: T,
 	#[allow(dead_code)]
 	#[doc(hidden)]
-	bytes: Pin<Bytes>,
+	bytes: BytesMut,
+}
+
+impl<T> BorrowCodec<T> {
+	/// Returns a mutable reference to the inner value.
+	///
+	/// # Safety
+	///
+	/// Callers must ensure that the inner value is not kept alive longer
+	/// than the original [`BorrowCodec`] that it came from. For example,
+	/// via [`std::mem::swap`] or [`std::mem::replace`].
+	pub unsafe fn as_mut_unchecked(&mut self) -> &mut T {
+		&mut self.data
+	}
+}
+
+impl<T> AsRef<T> for BorrowCodec<T> {
+	fn as_ref(&self) -> &T {
+		self
+	}
+}
+
+impl<T> Deref for BorrowCodec<T> {
+	type Target = T;
+
+	fn deref(&self) -> &Self::Target {
+		&self.data
+	}
 }
 
 impl<T> fmt::Debug for BorrowCodec<T>
@@ -262,18 +291,6 @@ where
 	}
 }
 
-impl<T> Default for BorrowCodec<T>
-where
-	T: Default,
-{
-	fn default() -> Self {
-		Self {
-			data: Default::default(),
-			bytes: Pin::new(Bytes::new()),
-		}
-	}
-}
-
 impl<'de, T> BorrowCodec<T>
 where
 	T: CodecDecode<'de>,
@@ -283,33 +300,21 @@ where
 	/// # Errors
 	///
 	/// See [`CodecRejection`] for more information.
-	pub fn from_bytes(bytes: Bytes, content_type: ContentType) -> Result<Self, CodecRejection> {
-		let bytes = Pin::new(bytes);
-
-		Ok(Self {
-			data: Codec::<T>::from_bytes(
-				// SAFETY: The bytes that are being referenced by the slice are pinned
-				// and will not be dropped while the slice is alive.
+	pub fn from_bytes(bytes: BytesMut, content_type: ContentType) -> Result<Self, CodecRejection> {
+		let data = Codec::<T>::from_bytes(
+				// SAFETY: The bytes that are being referenced by the slice are behind a pointer
+				// so they will not move. The bytes are also kept alive by the struct that contains
+				// this struct that references the slice, so the bytes will not be deallocated
+				// while this struct is alive.
 				unsafe { std::slice::from_raw_parts(bytes.as_ptr(), bytes.len()) },
 				content_type,
 			)?
-			.into_inner(),
+			.into_inner();
+
+		Ok(Self {
+			data,
 			bytes,
 		})
-	}
-}
-
-impl<T> Deref for BorrowCodec<T> {
-	type Target = T;
-
-	fn deref(&self) -> &Self::Target {
-		&self.data
-	}
-}
-
-impl<T> DerefMut for BorrowCodec<T> {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.data
 	}
 }
 
@@ -333,7 +338,7 @@ where
 			.and_then(ContentType::from_header)
 			.unwrap_or_default();
 
-		let bytes = Bytes::from_request(req, state)
+		let bytes = BytesMut::from_request(req, state)
 			.await
 			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
 
@@ -342,6 +347,7 @@ where
 
 		#[cfg(feature = "validator")]
 		data
+			.as_ref()
 			.validate()
 			.map_err(|e| CodecRejection::from(e).into_codec_response(accept.into()))?;
 
@@ -403,9 +409,9 @@ mod test {
 mod miri {
 	use std::borrow::Cow;
 
-	use axum::body::Bytes;
+	use bytes::Bytes;
 
-	use super::{BorrowCodec, ContentType};
+	use super::*;
 
 	#[crate::apply(decode, crate = "crate")]
 	#[derive(Debug, PartialEq, Eq)]
@@ -418,23 +424,8 @@ mod miri {
 	fn test_zero_copy() {
 		let bytes = b"{\"hello\": \"world\"}".to_vec();
 		let data =
-			BorrowCodec::<BorrowData>::from_bytes(Bytes::from(bytes), ContentType::Json).unwrap();
+			BorrowCodec::<BorrowData>::from_bytes(BytesMut::from(Bytes::from(bytes)), ContentType::Json).unwrap();
 
-		assert_eq!(&*data, &BorrowData {
-			hello: Cow::Borrowed("world")
-		});
-	}
-
-	#[test]
-	fn test_zero_copy_mem_swap() {
-		let bytes = b"{\"hello\": \"world\"}".to_vec();
-		let mut data =
-			BorrowCodec::<BorrowData>::from_bytes(Bytes::from(bytes), ContentType::Json).unwrap();
-
-		core::mem::swap(&mut data.hello, &mut Cow::Borrowed("everyone"));
-
-		assert_eq!(&*data, &BorrowData {
-			hello: Cow::Borrowed("everyone")
-		});
+		assert_eq!(data.hello, Cow::Borrowed("world"));
 	}
 }

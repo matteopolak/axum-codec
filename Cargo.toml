@@ -20,6 +20,7 @@ axum-codec-macros = { path = "macros", version = "0.0.11", default-features = fa
 bincode = { version = "2.0.0-rc.3", default-features = false, features = ["std"], optional = true }
 # 0.6.3 added the #[bitcode(crate = "...")] option
 bitcode = { version = "0.6.3", default-features = false, features = ["std"], optional = true }
+bytes = "1"
 ciborium = { version = "0.2", optional = true }
 mime = "0.3"
 rmp-serde = { version= "1", optional = true }

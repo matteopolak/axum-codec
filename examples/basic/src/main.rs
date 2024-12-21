@@ -46,15 +46,14 @@ struct BorrowGreeting<'d> {
 }
 
 async fn borrow_greet(greeting: BorrowCodec<BorrowGreeting<'_>>) -> impl IntoCodecResponse {
-	let is_zero = matches!(greeting.message, Cow::Borrowed(..));
+	let is_borrowed = matches!(greeting.message, Cow::Borrowed(..));
 
 	Codec(Greeting {
-		message: if is_zero {
-			"Borrowing from input"
+		message: if is_borrowed {
+			"Message is borrowed".into()
 		} else {
-			"Not borrowing from input (for JSON, probably using an escaped character)"
+			"Message is owned".into()
 		}
-		.to_string(),
 	})
 }
 
