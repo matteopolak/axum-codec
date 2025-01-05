@@ -22,6 +22,7 @@ bincode = { version = "2.0.0-rc.3", default-features = false, features = ["std"]
 bitcode = { version = "0.6.3", default-features = false, features = ["std"], optional = true }
 bytes = "1"
 ciborium = { version = "0.2", optional = true }
+garde = { version = "0.21.0", optional = true }
 mime = "0.3"
 rmp-serde = { version= "1", optional = true }
 schemars = { version = "0.8", optional = true, default-features = false }
@@ -54,6 +55,9 @@ aide = ["dep:aide", "dep:schemars", "axum-codec-macros/aide", "axum/json", "axum
 
 # Enables support for `validator`, adds an additional `validator::Validate` bound to `T` in `Codec<T>`
 validator = ["dep:validator", "axum-codec-macros/validator"]
+
+# Enables support for `garde`
+garde = ["dep:garde", "axum-codec-macros/garde"]
 
 # Enables more verbose (and expensive) error handling machinery, but significantly
 # improves the quality of error messages for consumers of the API.
