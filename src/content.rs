@@ -220,8 +220,10 @@ impl ContentType {
 	}
 }
 
-#[axum::async_trait]
-impl<S> FromRequestParts<S> for ContentType {
+impl<S> FromRequestParts<S> for ContentType
+where
+	S: Sync,
+{
 	type Rejection = Infallible;
 
 	async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
@@ -278,7 +280,6 @@ impl From<Accept> for ContentType {
 	}
 }
 
-#[axum::async_trait]
 impl<S> FromRequestParts<S> for Accept
 where
 	S: Send + Sync + 'static,

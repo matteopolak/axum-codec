@@ -60,14 +60,14 @@ impl aide::OperationOutput for CodecRejection {
 	type Inner = Message;
 
 	fn operation_response(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Option<aide::openapi::Response> {
 		axum::Json::<Message>::operation_response(ctx, operation)
 	}
 
 	fn inferred_responses(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Vec<(Option<u16>, aide::openapi::Response)> {
 		axum::Json::<Message>::inferred_responses(ctx, operation)
@@ -79,14 +79,14 @@ impl aide::OperationOutput for CodecRejection {
 	type Inner = String;
 
 	fn operation_response(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Option<aide::openapi::Response> {
 		axum::Json::<String>::operation_response(ctx, operation)
 	}
 
 	fn inferred_responses(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Vec<(Option<u16>, aide::openapi::Response)> {
 		axum::Json::<String>::inferred_responses(ctx, operation)
@@ -118,14 +118,14 @@ impl aide::OperationOutput for Message {
 	type Inner = Self;
 
 	fn operation_response(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Option<aide::openapi::Response> {
 		axum::Json::<Self>::operation_response(ctx, operation)
 	}
 
 	fn inferred_responses(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Vec<(Option<u16>, aide::openapi::Response)> {
 		axum::Json::<Self>::inferred_responses(ctx, operation)

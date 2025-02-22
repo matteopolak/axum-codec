@@ -32,7 +32,7 @@ pub trait CodecHandler<T, I: Input, D, S>: Clone + Send + 'static {
 /// handler.
 pub struct CodecHandlerFn<H, I, D> {
 	pub(crate) f: H,
-	pub(crate) _marker: std::marker::PhantomData<(I, D)>,
+	pub(crate) _marker: std::marker::PhantomData<(I, fn() -> D)>,
 }
 
 impl<H, I, D> CodecHandlerFn<H, I, D> {
@@ -61,12 +61,15 @@ impl<H, I, D> aide::OperationInput for CodecHandlerFn<H, I, D>
 where
 	I: aide::OperationInput,
 {
-	fn operation_input(ctx: &mut aide::gen::GenContext, operation: &mut aide::openapi::Operation) {
+	fn operation_input(
+		ctx: &mut aide::generate::GenContext,
+		operation: &mut aide::openapi::Operation,
+	) {
 		I::operation_input(ctx, operation);
 	}
 
 	fn inferred_early_responses(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Vec<(Option<u16>, aide::openapi::Response)> {
 		I::inferred_early_responses(ctx, operation)
@@ -81,14 +84,14 @@ where
 	type Inner = D;
 
 	fn operation_response(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Option<aide::openapi::Response> {
 		D::operation_response(ctx, operation)
 	}
 
 	fn inferred_responses(
-		ctx: &mut aide::gen::GenContext,
+		ctx: &mut aide::generate::GenContext,
 		operation: &mut aide::openapi::Operation,
 	) -> Vec<(Option<u16>, aide::openapi::Response)> {
 		D::inferred_responses(ctx, operation)
@@ -113,9 +116,9 @@ where
 
 impl<T, H, I, D, S> Handler<T, S> for CodecHandlerFn<H, I, D>
 where
-	H: CodecHandler<T, I, D, S>,
-	S: Send + Sync + 'static,
-	I: Input + Send + 'static,
+	H: CodecHandler<T, I, D, S> + Sync,
+	S: Send + 'static,
+	I: Input + Send + Sync + 'static,
 	D: IntoCodecResponse + Send + 'static,
 {
 	type Future = Pin<Box<dyn Future<Output = Response> + Send>>;

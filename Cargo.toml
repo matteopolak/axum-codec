@@ -1,6 +1,6 @@
 [package]
 name = "axum-codec"
-version = "0.0.17"
+version = "0.0.19"
 edition = "2021"
 description = "A multi-codec extractor and response writer for Axum"
 license = "MIT OR Apache-2.0"
@@ -14,8 +14,8 @@ all-features = true
 members = ["macros", ".", "examples/*"]
 
 [dependencies]
-aide = { version = "0.13", optional = true, default-features = false, features = ["axum"] }
-axum = { version = "0.7", default-features = false }
+aide = { version = "0.14", optional = true, default-features = false, features = ["axum", "axum-json"] }
+axum = { version = "0.8", default-features = false }
 axum-codec-macros = { path = "macros", version = "0.0.12", default-features = false }
 bincode = { version = "2.0.0-rc.3", default-features = false, features = ["std"], optional = true }
 # 0.6.3 added the #[bitcode(crate = "...")] option
@@ -31,10 +31,10 @@ serde_urlencoded = { version = "0.7", optional = true }
 serde_yaml = { version = "0.9", optional = true }
 thiserror = "1"
 toml = { version = "0.8", optional = true }
-validator = { version = "0.19", optional = true }
+validator = { version = "0.20", optional = true }
 
 [dev-dependencies]
-axum = "0.7"
+axum = "0.8"
 serde = { version = "1", features = ["derive", "rc"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 # cannot run `BorrowCodec` tests with `bitcode` since it doesn't support `Cow` (yet)
