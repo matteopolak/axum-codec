@@ -16,7 +16,7 @@ members = ["macros", ".", "examples/*"]
 [dependencies]
 aide = { version = "0.15", optional = true, default-features = false, features = ["axum", "axum-json"] }
 axum = { version = "0.8", default-features = false }
-axum-codec-macros = { path = "macros", version = "0.0.12", default-features = false }
+axum-codec-macros = { path = "macros", version = "0.0.13", default-features = false }
 bincode = { version = "2", default-features = false, features = ["std"], optional = true }
 # 0.6.3 added the #[bitcode(crate = "...")] option
 bitcode = { version = "0.6.3", default-features = false, features = ["std"], optional = true }
