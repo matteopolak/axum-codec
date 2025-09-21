@@ -14,7 +14,7 @@ all-features = true
 members = ["macros", ".", "examples/*"]
 
 [dependencies]
-aide = { version = "0.15", optional = true, default-features = false, features = ["axum", "axum-json"] }
+aide = { version = "0.14", optional = true, default-features = false, features = ["axum", "axum-json"] }
 axum = { version = "0.8", default-features = false }
 axum-codec-macros = { path = "macros", version = "0.0.13", default-features = false }
 bincode = { version = "2", default-features = false, features = ["std"], optional = true }
