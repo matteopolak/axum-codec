@@ -24,7 +24,7 @@ bytes = "1"
 ciborium = { version = "0.2", optional = true }
 mime = "0.3"
 rmp-serde = { version= "1", optional = true }
-schemars = { version = "1", optional = true, default-features = false }
+schemars = { version = "0.8", optional = true, default-features = false }
 serde = { version = "1", optional = true, default-features = false }
 serde_json = { version = "1", optional = true }
 serde_urlencoded = { version = "0.7", optional = true }
