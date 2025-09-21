@@ -86,7 +86,7 @@ where
 	#[cfg(feature = "toml")]
 	#[inline]
 	pub fn from_toml(text: &'b str) -> Result<Self, toml::de::Error> {
-		T::deserialize(toml::Deserializer::new(text)).map(Self)
+		toml::from_str(text).map(Self)
 	}
 }
 
@@ -102,7 +102,7 @@ impl<'b, T> Codec<T> {
 	#[inline]
 	pub fn from_bincode(bytes: &'b [u8]) -> Result<Self, bincode::error::DecodeError>
 	where
-		T: bincode::BorrowDecode<'b>,
+		T: bincode::BorrowDecode<'b, ()>,
 	{
 		bincode::borrow_decode_from_slice(bytes, bincode::config::standard()).map(|t| Self(t.0))
 	}

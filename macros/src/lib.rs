@@ -194,7 +194,7 @@ mod __private {
 			}
 
 			constraints.extend(quote! {
-				bincode::BorrowDecode<'de>
+				bincode::BorrowDecode<'de, ()>
 			});
 		}
 
