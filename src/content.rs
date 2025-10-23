@@ -100,7 +100,30 @@ impl FromStr for ContentType {
 	type Err = FromStrError;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		let mime = s.parse::<mime::Mime>()?;
+
+		let accept: accept_header::Accept = s.parse().map_err(|_| FromStrError::InvalidContentType)?;
+
+		// Prepare a list of supported media types, based on which features are enabled
+		let mut available = Vec::new();
+		#[cfg(feature = "json")]
+		available.push("application/json");
+		#[cfg(feature = "form")]
+		available.push("application/x-www-form-urlencoded");
+		#[cfg(feature = "msgpack")]
+		available.extend([ "application/msgpack", "application/vnd.msgpack", "application/x-msgpack", "application/x.msgpack"]);
+		#[cfg(feature = "bincode")]
+		available.extend([ "application/bincode", "application/vnd.bincode", "application/x-bincode", "application/x.bincode"]);
+		#[cfg(feature = "bitcode")]
+		available.extend([ "application/bitcode", "application/vnd.bitcode", "application/x-bitcode", "application/x.bitcode"]);
+		#[cfg(feature = "cbor")]
+		available.push("application/cbor");
+		#[cfg(feature = "yaml")]
+		available.extend([ "application/yaml", "application/yml", "application/x-yaml", "text/yaml", "text/yml", "text/x-yaml"]);
+		#[cfg(feature = "toml")]
+		available.extend([ "application/toml", "application/x-toml", "application/vnd.toml", "text/toml", "text/x-toml", "text/vnd.toml"]);
+
+		let available_mimes: Vec<mime::Mime> = available.into_iter().map(|string| mime::Mime::from_str(string).unwrap()).collect();
+		let mime = accept.negotiate(&available_mimes).map_err(|_| FromStrError::InvalidContentType)?;
 		let subtype = mime.suffix().unwrap_or_else(|| mime.subtype());
 
 		Ok(match (mime.type_().as_str(), subtype.as_str()) {
@@ -151,6 +174,26 @@ impl ContentType {
 	/// let content_type = ContentType::from_header(&header).unwrap();
 	///
 	/// assert_eq!(content_type, ContentType::MsgPack);
+	///
+	/// let header = HeaderValue::from_static("text/plain, image/png, application/x-yaml, application/json");
+	/// let content_type = ContentType::from_header(&header).unwrap();
+	///
+	/// assert_eq!(content_type, ContentType::Yaml);
+	///
+	/// let header = HeaderValue::from_static("application/x-msgpack;q=0.7, application/json;q=0.6");
+	/// let content_type = ContentType::from_header(&header).unwrap();
+	///
+	/// assert_eq!(content_type, ContentType::MsgPack);
+	///
+	/// let header = HeaderValue::from_static("text/plain, image/png, unknown/*");
+	/// let option = ContentType::from_header(&header);
+	///
+	/// assert_eq!(option, None);
+	///
+	/// let header = HeaderValue::from_static("");
+	/// let option = ContentType::from_header(&header);
+	///
+	/// assert_eq!(option, None);
 	/// # }
 	pub fn from_header(header: &HeaderValue) -> Option<Self> {
 		header.to_str().ok()?.parse().ok()
