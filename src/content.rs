@@ -100,7 +100,58 @@ impl FromStr for ContentType {
 	type Err = FromStrError;
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		let mime = s.parse::<mime::Mime>()?;
+
+		let accept: accept_header::Accept = s.parse().map_err(|_| FromStrError::InvalidContentType)?;
+
+		// Prepare a list of supported media types, based on which features are enabled
+		let mut available = Vec::new();
+		#[cfg(feature = "json")]
+		available.push(mime::Mime::from_str("application/json").unwrap());
+		#[cfg(feature = "form")]
+		available.push(mime::Mime::from_str("application/x-www-form-urlencoded").unwrap());
+		#[cfg(feature = "msgpack")]
+		available.extend([
+			mime::Mime::from_str("application/msgpack").unwrap(),
+			mime::Mime::from_str("application/vnd.msgpack").unwrap(),
+			mime::Mime::from_str("application/x-msgpack").unwrap(),
+			mime::Mime::from_str("application/x.msgpack").unwrap(),
+		]);
+		#[cfg(feature = "bincode")]
+		available.extend([
+			mime::Mime::from_str("application/bincode").unwrap(),
+			mime::Mime::from_str("application/vnd.bincode").unwrap(),
+			mime::Mime::from_str("application/x-bincode").unwrap(),
+			mime::Mime::from_str("application/x.bincode").unwrap(),
+		]);
+		#[cfg(feature = "bitcode")]
+		available.extend([
+			mime::Mime::from_str("application/bitcode").unwrap(),
+			mime::Mime::from_str("application/vnd.bitcode").unwrap(),
+			mime::Mime::from_str("application/x-bitcode").unwrap(),
+			mime::Mime::from_str("application/x.bitcode").unwrap(),
+		]);
+		#[cfg(feature = "cbor")]
+		available.push(mime::Mime::from_str("application/cbor").unwrap());
+		#[cfg(feature = "yaml")]
+		available.extend([
+			mime::Mime::from_str("application/yaml").unwrap(),
+			mime::Mime::from_str("application/yml").unwrap(),
+			mime::Mime::from_str("application/x-yaml").unwrap(),
+			mime::Mime::from_str("text/yaml").unwrap(),
+			mime::Mime::from_str("text/yml").unwrap(),
+			mime::Mime::from_str("text/x-yaml").unwrap(),
+		]);
+		#[cfg(feature = "toml")]
+		available.extend([
+			mime::Mime::from_str("application/toml").unwrap(),
+			mime::Mime::from_str("application/x-toml").unwrap(),
+			mime::Mime::from_str("application/vnd.toml").unwrap(),
+			mime::Mime::from_str("text/toml").unwrap(),
+			mime::Mime::from_str("text/x-toml").unwrap(),
+			mime::Mime::from_str("text/vnd.toml").unwrap(),
+		]);
+
+		let mime = accept.negotiate(&available).map_err(|_| FromStrError::InvalidContentType)?;
 		let subtype = mime.suffix().unwrap_or_else(|| mime.subtype());
 
 		Ok(match (mime.type_().as_str(), subtype.as_str()) {
@@ -151,6 +202,26 @@ impl ContentType {
 	/// let content_type = ContentType::from_header(&header).unwrap();
 	///
 	/// assert_eq!(content_type, ContentType::MsgPack);
+	///
+	/// let header = HeaderValue::from_static("text/plain, image/png, application/x-yaml, application/json");
+	/// let content_type = ContentType::from_header(&header).unwrap();
+	///
+	/// assert_eq!(content_type, ContentType::Yaml);
+	///
+	/// let header = HeaderValue::from_static("application/x-msgpack;q=0.7, application/json;q=0.6");
+	/// let content_type = ContentType::from_header(&header).unwrap();
+	///
+	/// assert_eq!(content_type, ContentType::MsgPack);
+	///
+	/// let header = HeaderValue::from_static("text/plain, image/png, unknown/*");
+	/// let option = ContentType::from_header(&header);
+	///
+	/// assert_eq!(option, None);
+	///
+	/// let header = HeaderValue::from_static("");
+	/// let option = ContentType::from_header(&header);
+	///
+	/// assert_eq!(option, None);
 	/// # }
 	pub fn from_header(header: &HeaderValue) -> Option<Self> {
 		header.to_str().ok()?.parse().ok()
