@@ -28,7 +28,7 @@ schemars = { version = "0.8", optional = true, default-features = false }
 serde = { version = "1", optional = true, default-features = false }
 serde_json = { version = "1", optional = true }
 serde_urlencoded = { version = "0.7", optional = true }
-serde_yaml = { version = "0.9", optional = true }
+serde_yaml_ng = { version = "0.10", optional = true }
 thiserror = "2"
 toml = { version = "0.9", optional = true }
 validator = { version = "0.20", optional = true }
@@ -66,7 +66,7 @@ bitcode = ["dep:bitcode", "axum-codec-macros/bitcode"]
 json = ["dep:serde_json", "serde"]
 msgpack = ["dep:rmp-serde", "serde"]
 toml = ["dep:toml", "serde"]
-yaml = ["dep:serde_yaml", "serde"]
+yaml = ["dep:serde_yaml_ng", "serde"]
 
 # Should not be manually enabled, but will not cause any issues if it is.
 serde = ["dep:serde", "axum-codec-macros/serde"]

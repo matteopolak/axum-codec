@@ -69,11 +69,11 @@ where
 	///
 	/// # Errors
 	///
-	/// See [`serde_yaml::from_slice`].
+	/// See [`serde_yaml_ng::from_slice`].
 	#[cfg(feature = "yaml")]
 	#[inline]
-	pub fn from_yaml(text: &'b str) -> Result<Self, serde_yaml::Error> {
-		serde_yaml::from_str(text).map(Self)
+	pub fn from_yaml(text: &'b str) -> Result<Self, serde_yaml_ng::Error> {
+		serde_yaml_ng::from_str(text).map(Self)
 	}
 
 	/// Attempts to deserialize the given text as [TOML](https://toml.io).

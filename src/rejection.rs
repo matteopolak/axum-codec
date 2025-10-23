@@ -31,7 +31,7 @@ pub enum CodecRejection {
 	Bitcode(#[from] bitcode::Error),
 	#[cfg(feature = "yaml")]
 	#[error(transparent)]
-	Yaml(#[from] serde_yaml::Error),
+	Yaml(#[from] serde_yaml_ng::Error),
 	#[cfg(feature = "toml")]
 	#[error(transparent)]
 	Toml(#[from] toml::de::Error),

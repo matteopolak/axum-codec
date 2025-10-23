@@ -34,7 +34,7 @@ pub enum Error {
 	Bincode(#[from] bincode::error::EncodeError),
 	#[cfg(feature = "yaml")]
 	#[error(transparent)]
-	Yaml(#[from] serde_yaml::Error),
+	Yaml(#[from] serde_yaml_ng::Error),
 	#[cfg(feature = "toml")]
 	#[error(transparent)]
 	Toml(#[from] toml::ser::Error),
@@ -106,11 +106,11 @@ where
 	///
 	/// # Errors
 	///
-	/// See [`serde_yaml::to_vec`].
+	/// See [`serde_yaml_ng::to_vec`].
 	#[cfg(feature = "yaml")]
 	#[inline]
-	pub fn to_yaml(&self) -> Result<String, serde_yaml::Error> {
-		serde_yaml::to_string(&self.0)
+	pub fn to_yaml(&self) -> Result<String, serde_yaml_ng::Error> {
+		serde_yaml_ng::to_string(&self.0)
 	}
 
 	/// Attempts to serialize the given value as [TOML](https://toml.io).
