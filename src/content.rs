@@ -106,52 +106,24 @@ impl FromStr for ContentType {
 		// Prepare a list of supported media types, based on which features are enabled
 		let mut available = Vec::new();
 		#[cfg(feature = "json")]
-		available.push(mime::Mime::from_str("application/json").unwrap());
+		available.push("application/json");
 		#[cfg(feature = "form")]
-		available.push(mime::Mime::from_str("application/x-www-form-urlencoded").unwrap());
+		available.push("application/x-www-form-urlencoded");
 		#[cfg(feature = "msgpack")]
-		available.extend([
-			mime::Mime::from_str("application/msgpack").unwrap(),
-			mime::Mime::from_str("application/vnd.msgpack").unwrap(),
-			mime::Mime::from_str("application/x-msgpack").unwrap(),
-			mime::Mime::from_str("application/x.msgpack").unwrap(),
-		]);
+		available.extend([ "application/msgpack", "application/vnd.msgpack", "application/x-msgpack", "application/x.msgpack"]);
 		#[cfg(feature = "bincode")]
-		available.extend([
-			mime::Mime::from_str("application/bincode").unwrap(),
-			mime::Mime::from_str("application/vnd.bincode").unwrap(),
-			mime::Mime::from_str("application/x-bincode").unwrap(),
-			mime::Mime::from_str("application/x.bincode").unwrap(),
-		]);
+		available.extend([ "application/bincode", "application/vnd.bincode", "application/x-bincode", "application/x.bincode"]);
 		#[cfg(feature = "bitcode")]
-		available.extend([
-			mime::Mime::from_str("application/bitcode").unwrap(),
-			mime::Mime::from_str("application/vnd.bitcode").unwrap(),
-			mime::Mime::from_str("application/x-bitcode").unwrap(),
-			mime::Mime::from_str("application/x.bitcode").unwrap(),
-		]);
+		available.extend([ "application/bitcode", "application/vnd.bitcode", "application/x-bitcode", "application/x.bitcode"]);
 		#[cfg(feature = "cbor")]
-		available.push(mime::Mime::from_str("application/cbor").unwrap());
+		available.push("application/cbor");
 		#[cfg(feature = "yaml")]
-		available.extend([
-			mime::Mime::from_str("application/yaml").unwrap(),
-			mime::Mime::from_str("application/yml").unwrap(),
-			mime::Mime::from_str("application/x-yaml").unwrap(),
-			mime::Mime::from_str("text/yaml").unwrap(),
-			mime::Mime::from_str("text/yml").unwrap(),
-			mime::Mime::from_str("text/x-yaml").unwrap(),
-		]);
+		available.extend([ "application/yaml", "application/yml", "application/x-yaml", "text/yaml", "text/yml", "text/x-yaml"]);
 		#[cfg(feature = "toml")]
-		available.extend([
-			mime::Mime::from_str("application/toml").unwrap(),
-			mime::Mime::from_str("application/x-toml").unwrap(),
-			mime::Mime::from_str("application/vnd.toml").unwrap(),
-			mime::Mime::from_str("text/toml").unwrap(),
-			mime::Mime::from_str("text/x-toml").unwrap(),
-			mime::Mime::from_str("text/vnd.toml").unwrap(),
-		]);
+		available.extend([ "application/toml", "application/x-toml", "application/vnd.toml", "text/toml", "text/x-toml", "text/vnd.toml"]);
 
-		let mime = accept.negotiate(&available).map_err(|_| FromStrError::InvalidContentType)?;
+		let available_mimes: Vec<mime::Mime> = available.into_iter().map(|string| mime::Mime::from_str(string).unwrap()).collect();
+		let mime = accept.negotiate(&available_mimes).map_err(|_| FromStrError::InvalidContentType)?;
 		let subtype = mime.suffix().unwrap_or_else(|| mime.subtype());
 
 		Ok(match (mime.type_().as_str(), subtype.as_str()) {
